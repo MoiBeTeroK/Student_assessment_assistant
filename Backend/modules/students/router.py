@@ -1,20 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from Backend.database import SessionLocal  # Путь теперь через Backend
+from Backend.database import get_db
 from . import models, schemas
 
 router = APIRouter(
     prefix="/students",
     tags=["Students"]
 )
-
-# Зависимость для БД
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Создать студента
 @router.post("/", response_model=schemas.StudentOut, summary="Добавить нового студента")

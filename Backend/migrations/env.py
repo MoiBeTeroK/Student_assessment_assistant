@@ -15,6 +15,7 @@ from Backend.database import Base
 # Важно: чтобы Alembic "увидел" таблицы, их модели нужно импортировать сюда
 from Backend.modules.disciplines.models import Discipline
 from Backend.modules.students.models import Student
+from Backend.modules.tests.models import Test
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

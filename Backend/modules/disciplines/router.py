@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from Backend.database import SessionLocal  # Импорт сессии из корня app
+from Backend.database import get_db
 from . import models, schemas         # Импорт моделей и схем из текущей папки
 from sqlalchemy import func
 
@@ -8,14 +8,6 @@ router = APIRouter(
     prefix="/disciplines",
     tags=["Disciplines"] # группировка в Swagger UI
 )
-
-# Зависимость для подключения к БД
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Создать дисциплину
 @router.post("/", response_model=schemas.DisciplineOut, summary="Создать новую дисциплину")
