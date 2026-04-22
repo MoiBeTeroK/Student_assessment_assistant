@@ -75,3 +75,26 @@ def create_test(test_data: TestCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Произошла ошибка при сохранении теста в базу данных."
         )
+    
+# Удалить тест по ID
+@router.delete("/{test_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить тест по ID")
+def delete_test(test_id: int, db: Session = Depends(get_db)):
+    test = db.query(Test).filter(Test.id_test == test_id).first()
+    
+    if not test:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Тест с ID {test_id} не найден."
+        )
+
+    try:
+        db.delete(test)
+        db.commit()
+        return None
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось удалить тест из-за ошибки базы данных."
+        )

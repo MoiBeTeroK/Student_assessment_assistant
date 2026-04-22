@@ -1,0 +1,14 @@
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from Backend.database import Base
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    id_question = Column(Integer, primary_key=True, index=True)
+    id_discipline = Column(Integer, ForeignKey("disciplines.id_discipline"), nullable=False)
+    standard_answer = Column(String, nullable=False)
+    question_content = Column(String, nullable=False)
+
+    # Связь с дисциплиной
+    discipline = relationship("Backend.modules.disciplines.models.Discipline", back_populates="questions")

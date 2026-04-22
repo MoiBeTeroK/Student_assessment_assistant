@@ -8,3 +8,4 @@ class Discipline(Base):
     name_discipline = Column(String(255), nullable=False)
 
     tests = relationship("Backend.modules.tests.models.Test", back_populates="discipline")
+    questions = relationship("Backend.modules.questions.models.Question", back_populates="discipline")
