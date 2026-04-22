@@ -1,6 +1,13 @@
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Table, Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from Backend.database import Base
+
+test_questions = Table(
+    "test_questions",
+    Base.metadata,
+    Column("id_test", Integer, ForeignKey("tests.id_test"), primary_key=True),
+    Column("id_question", Integer, ForeignKey("questions.id_question"), primary_key=True)
+)
 
 class Test(Base):
     __tablename__ = "tests"
@@ -16,3 +23,5 @@ class Test(Base):
     __table_args__ = (
         UniqueConstraint('id_discipline', 'test_number', name='_discipline_test_uc'),
     )
+
+    questions = relationship("Backend.modules.questions.models.Question", secondary=test_questions, backref="tests")

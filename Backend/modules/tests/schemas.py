@@ -12,3 +12,7 @@ class TestOut(TestBase):
 
     class Config:
         from_attributes = True
+
+class TestQuestionLink(BaseModel):
+    id_test: int
+    id_question: int
