@@ -15,16 +15,15 @@ class ExamResultBase(BaseModel):
     id_test: int
     rec_grade: Optional[float] = None
     final_grade: Optional[float] = None
-    # SQLAlchemy будет автоматически сериализовать список этих объектов в JSONB
+    date: datetime
     analitics_data: Optional[List[QuestionAnalysis]] = None
 
 class ExamResultCreate(ExamResultBase):
+    # Теперь дата обязательна при создании
     pass
 
 class ExamResultOut(ExamResultBase):
     id_result: int
-    date_start: datetime
-    date_end: Optional[datetime] = None
 
     class Config:
         from_attributes = True

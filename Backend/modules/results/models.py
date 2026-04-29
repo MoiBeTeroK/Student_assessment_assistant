@@ -13,9 +13,7 @@ class ExamResult(Base):
     rec_grade = Column(Numeric(3, 2))
     final_grade = Column(Numeric(3, 2))
     
-    # Автоматическая установка времени начала
-    date_start = Column(TIMESTAMP, server_default=func.now())
-    date_end = Column(TIMESTAMP)
+    date = Column(TIMESTAMP)
     
     analitics_data = Column(JSONB)
 
