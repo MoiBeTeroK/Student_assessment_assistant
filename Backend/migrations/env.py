@@ -17,6 +17,7 @@ from Backend.modules.disciplines.models import Discipline
 from Backend.modules.students.models import Student
 from Backend.modules.tests.models import Test, test_questions
 from Backend.modules.questions.models import Question
+from Backend.modules.results.models import ExamResult
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -25,3 +25,4 @@ class Test(Base):
     )
 
     questions = relationship("Backend.modules.questions.models.Question", secondary=test_questions, backref="tests")
+    exam_results = relationship("Backend.modules.results.models.ExamResult", back_populates="test")

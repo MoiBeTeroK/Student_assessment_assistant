@@ -5,12 +5,15 @@ from Backend.modules.disciplines.router import router as disciplines_router
 from Backend.modules.students.router import router as students_router
 from Backend.modules.tests.router import router as tests_router
 from Backend.modules.questions.router import router as questions_router
+from Backend.modules.results.router import router as results_router
 
 app = FastAPI(title="Student assessment assistant")
 
 origins = [
     "http://localhost:3000",
     "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
 ]
 
 app.add_middleware(
@@ -22,10 +25,11 @@ app.add_middleware(
 )
 
 # Подключаем роутеры
-app.include_router(disciplines_router, prefix="/disciplines", tags=["Disciplines"])
-app.include_router(students_router, prefix="/students", tags=["Students"])
-app.include_router(tests_router, prefix="/tests", tags=["Tests"])
-app.include_router(questions_router, prefix="/questions", tags=["Questions"])
+app.include_router(disciplines_router)
+app.include_router(students_router)
+app.include_router(tests_router)
+app.include_router(questions_router)
+app.include_router(results_router)
 
 @app.get("/", tags=["Root"])
 async def root():
