@@ -1,18 +1,37 @@
 from pydantic import BaseModel
+from typing import List, Optional
 
 class TestBase(BaseModel):
     test_number: int
     id_discipline: int
 
 class TestCreate(TestBase):
-    pass
+    question_ids: List[int] = []
 
-class TestOut(TestBase):
+class TestUpdate(BaseModel):
+    test_number: Optional[int] = None
+    id_discipline: Optional[int] = None
+    question_ids: Optional[List[int]] = None
+    
+class QuestionShortOut(BaseModel):
+    id_question: int
+    question_content: str 
+    standard_answer: str
+
+    class Config:
+        from_attributes = True
+
+class TestIdOnly(BaseModel):
     id_test: int
 
     class Config:
         from_attributes = True
 
-class TestQuestionLink(BaseModel):
+class TestOut(BaseModel):
     id_test: int
-    id_question: int
+    test_number: int
+    id_discipline: int
+    questions: List[QuestionShortOut] = [] 
+
+    class Config:
+        from_attributes = True
