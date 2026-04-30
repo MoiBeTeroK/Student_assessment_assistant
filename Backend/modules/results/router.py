@@ -4,14 +4,79 @@ from typing import List
 
 from Backend.database import get_db
 from Backend.modules.results.models import ExamResult
-from Backend.modules.results.schemas import ExamResultCreate, ExamResultOut
+from Backend.modules.results.schemas import (
+    ExamResultCreate, ExamResultOut, 
+    CalculateExamRequest, CalculationResponse
+)
 from Backend.modules.students.models import Student
-from Backend.modules.tests.models import Test
+from Backend.modules.questions.models import Question
+from Backend.modules.tests.models import Test, test_questions
+
+from Backend.dependencies import scorer
 
 router = APIRouter(
     prefix="/results",
     tags=["Results"]
 )
+
+@router.post("/calculate", response_model=CalculationResponse, summary="Рассчитать предварительную оценку")
+def calculate_results(data: CalculateExamRequest, db: Session = Depends(get_db)):
+    rows_for_scorer = []
+    
+    for ans in data.answers:
+        question_data = (
+            db.query(Question)
+            .join(test_questions, Question.id_question == test_questions.c.id_question)
+            .filter(test_questions.c.id_test == data.id_test)
+            .filter(Question.id_question == ans.id_question)
+            .first()
+        )
+        
+        if not question_data:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Вопрос {ans.id_question} не привязан к тесту {data.id_test}"
+            )
+            
+        rows_for_scorer.append({
+            "id_question": question_data.id_question,
+            "question": question_data.question_content,
+            "reference": question_data.standard_answer,
+            "student": ans.answer_text,
+            "type": "основной" # По умолчанию
+        })
+
+    if not rows_for_scorer:
+        raise HTTPException(status_code=400, detail="Список ответов пуст")
+
+    # Вызов нейронки
+    model_results = scorer.score_batch(rows_for_scorer)
+    
+    final_analytics = []
+    total_score = 0
+    total_grade = 0
+    
+    for i, res in enumerate(model_results):
+        analysis_item = {
+            "id_question": rows_for_scorer[i]["id_question"],
+            "type": rows_for_scorer[i]["type"],
+            "answer_st": rows_for_scorer[i]["student"],
+            "similarity": res["S"],
+            "term_coverage": res["C_raw"],
+            "speech_coherence": res["H"],
+            "question_rec_grade": res["grade"],
+            "comment": f"Сходство: {res['S']:.2f}. Анализ выполнен моделью Rubert."
+        }
+        final_analytics.append(analysis_item)
+        total_grade += res["grade"]
+        
+    count = len(model_results)
+    rec_grade = int(round(total_grade / count)) 
+
+    return {
+        "rec_grade": rec_grade,
+        "analitics_data": final_analytics
+    }
 
 @router.post("/", response_model=ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена")
 def create_exam_result(result_data: ExamResultCreate, db: Session = Depends(get_db)):
@@ -23,7 +88,7 @@ def create_exam_result(result_data: ExamResultCreate, db: Session = Depends(get_
             detail=f"Студент с ID {result_data.id_student} не найден."
         )
 
-    # 2. Проверяем, существует ли тест
+    # Проверяем, существует ли тест
     test = db.query(Test).filter(Test.id_test == result_data.id_test).first()
     if not test:
         raise HTTPException(
@@ -31,7 +96,6 @@ def create_exam_result(result_data: ExamResultCreate, db: Session = Depends(get_
             detail=f"Тест с ID {result_data.id_test} не найден."
         )
 
-    # 3. Создаем запись (поле date уже есть в result_data и попадет в модель автоматически)
     new_result = ExamResult(**result_data.model_dump())
     
     try:

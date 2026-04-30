@@ -28,3 +28,15 @@ class ExamResultOut(ExamResultBase):
 
     class Config:
         from_attributes = True
+
+class StudentAnswerInput(BaseModel):
+    id_question: int
+    answer_text: str
+
+class CalculateExamRequest(BaseModel):
+    id_test: int
+    answers: List[StudentAnswerInput]
+
+class CalculationResponse(BaseModel):
+    rec_grade: int
+    analitics_data: List[QuestionAnalysis]
