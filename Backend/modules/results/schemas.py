@@ -1,25 +1,26 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 
 class QuestionAnalysis(BaseModel):
     id_question: int
     type: str
-    question_content: str
-    answer: str
+    answer_st: str
     similarity: float
+    term_coverage: float
+    speech_coherence: float
+    question_rec_grade: int
     comment: str
 
 class ExamResultBase(BaseModel):
     id_student: int
     id_test: int
-    rec_grade: Optional[float] = None
-    final_grade: Optional[float] = None
+    rec_grade: float
+    final_grade: float
     date: datetime
-    analitics_data: Optional[List[QuestionAnalysis]] = None
+    analitics_data: List[QuestionAnalysis]
 
 class ExamResultCreate(ExamResultBase):
-    # Теперь дата обязательна при создании
     pass
 
 class ExamResultOut(ExamResultBase):
