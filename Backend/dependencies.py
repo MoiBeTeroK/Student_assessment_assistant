@@ -1,7 +1,7 @@
-from Backend.recommended_grade.scorer import StudentAnswerScorer
+from recommended_grade.scorer import StudentAnswerScorer
 
 # Инициализируем один раз здесь
 scorer = StudentAnswerScorer(
-    model_dir="Backend/recommended_grade/models/siamese_rubert_s_128",
+    model_dir="recommended_grade/models/siamese_rubert_s_128",
     weights={"w1": 0.78, "w2": 0.2, "w3": 0.02}
 )

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from Backend.database import get_db
+from database import get_db
 from . import models, schemas         # Импорт моделей и схем из текущей папки
 from sqlalchemy import func
 

@@ -23,7 +23,7 @@ from sklearn.metrics import (
     confusion_matrix,
     mean_absolute_error,
 )
-from Backend.recommended_grade.scorer import StudentAnswerScorer, compute_C_raw, compute_H
+from recommended_grade.scorer import StudentAnswerScorer, compute_C_raw, compute_H
 
 MODEL_DIR   = "models/siamese_rubert_s_128"
 TEST_PATH   = "datasets/test.csv"

@@ -11,17 +11,20 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from Backend.database import Base
 # Важно: чтобы Alembic "увидел" таблицы, их модели нужно импортировать сюда
-from Backend.modules.disciplines.models import Discipline
-from Backend.modules.students.models import Student
-from Backend.modules.tests.models import Test, test_questions
-from Backend.modules.questions.models import Question
-from Backend.modules.results.models import ExamResult
+from modules.disciplines.models import Discipline
+from modules.students.models import Student
+from modules.tests.models import Test, test_questions
+from modules.questions.models import Question
+from modules.results.models import ExamResult
+
+from database import Base, DATABASE_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

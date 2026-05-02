@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from Backend.database import Base
+from database import Base
 
 test_questions = Table(
     "test_questions",
@@ -18,11 +18,11 @@ class Test(Base):
     id_discipline = Column(Integer, ForeignKey("disciplines.id_discipline", ondelete="CASCADE"), nullable=False)
 
     # Связь для удобства доставать объект дисциплины из билета
-    discipline = relationship("Backend.modules.disciplines.models.Discipline", back_populates="tests")
+    discipline = relationship("modules.disciplines.models.Discipline", back_populates="tests")
 
     __table_args__ = (
         UniqueConstraint('id_discipline', 'test_number', name='_discipline_test_uc'),
     )
 
-    questions = relationship("Backend.modules.questions.models.Question", secondary=test_questions, backref="tests")
-    exam_results = relationship("Backend.modules.results.models.ExamResult", back_populates="test")
+    questions = relationship("modules.questions.models.Question", secondary=test_questions, backref="tests")
+    exam_results = relationship("modules.results.models.ExamResult", back_populates="test")

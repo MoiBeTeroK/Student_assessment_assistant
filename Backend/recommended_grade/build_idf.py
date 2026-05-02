@@ -3,7 +3,7 @@ import json
 import pandas as pd
 from collections import Counter
 
-from Backend.recommended_grade.scorer import extract_keywords
+from recommended_grade.scorer import extract_keywords
 
 
 def build_idf(dataset_path):

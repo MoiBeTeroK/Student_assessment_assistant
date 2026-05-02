@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from Backend.database import Base
+from database import Base
 
 class Question(Base):
     __tablename__ = "questions"
@@ -11,4 +11,4 @@ class Question(Base):
     question_content = Column(String, nullable=False)
 
     # Связь с дисциплиной
-    discipline = relationship("Backend.modules.disciplines.models.Discipline", back_populates="questions")
+    discipline = relationship("modules.disciplines.models.Discipline", back_populates="questions")

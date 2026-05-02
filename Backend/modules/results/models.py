@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Numeric, TIMESTAMP, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-from Backend.database import Base
+from database import Base
 
 class ExamResult(Base):
     __tablename__ = "exam_results"
@@ -17,5 +17,5 @@ class ExamResult(Base):
     
     analitics_data = Column(JSONB)
 
-    student = relationship("Backend.modules.students.models.Student", back_populates="exam_results")
-    test = relationship("Backend.modules.tests.models.Test", back_populates="exam_results")
+    student = relationship("modules.students.models.Student", back_populates="exam_results")
+    test = relationship("modules.tests.models.Test", back_populates="exam_results")

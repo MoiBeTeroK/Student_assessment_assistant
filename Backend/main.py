@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from Backend.modules.disciplines.router import router as disciplines_router
-from Backend.modules.students.router import router as students_router
-from Backend.modules.tests.router import router as tests_router
-from Backend.modules.questions.router import router as questions_router
-from Backend.modules.results.router import router as results_router
+from modules.disciplines.router import router as disciplines_router
+from modules.students.router import router as students_router
+from modules.tests.router import router as tests_router
+from modules.questions.router import router as questions_router
+from modules.results.router import router as results_router
 
 app = FastAPI(title="Student assessment assistant")
 

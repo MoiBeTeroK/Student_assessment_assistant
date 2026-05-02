@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from Backend.database import get_db
-from Backend.modules.results.models import ExamResult
-from Backend.modules.results.schemas import (
+from database import get_db
+from modules.results.models import ExamResult
+from modules.results.schemas import (
     ExamResultCreate, ExamResultOut, 
     CalculateExamRequest, CalculationResponse
 )
-from Backend.modules.students.models import Student
-from Backend.modules.questions.models import Question
-from Backend.modules.tests.models import Test, test_questions
+from modules.students.models import Student
+from modules.questions.models import Question
+from modules.tests.models import Test, test_questions
 
-from Backend.dependencies import scorer
+from dependencies import scorer
 
 router = APIRouter(
     prefix="/results",

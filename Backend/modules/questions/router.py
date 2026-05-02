@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from Backend.database import get_db
-from Backend.modules.questions.models import Question
-from Backend.modules.disciplines.models import Discipline
-from Backend.modules.questions.schemas import QuestionCreate, QuestionOut, QuestionUpdate
+from database import get_db
+from modules.questions.models import Question
+from modules.disciplines.models import Discipline
+from modules.questions.schemas import QuestionCreate, QuestionOut, QuestionUpdate
 
 router = APIRouter(
     prefix="/questions",

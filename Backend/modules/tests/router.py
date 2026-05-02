@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.orm import joinedload
 
-from Backend.database import get_db
-from Backend.modules.tests.models import Test
-from Backend.modules.tests.schemas import TestCreate, TestUpdate, TestOut, TestIdOnly
-from Backend.modules.disciplines.models import Discipline
-from Backend.modules.questions.models import Question
+from database import get_db
+from modules.tests.models import Test
+from modules.tests.schemas import TestCreate, TestUpdate, TestOut, TestIdOnly
+from modules.disciplines.models import Discipline
+from modules.questions.models import Question
 
 
 router = APIRouter(
