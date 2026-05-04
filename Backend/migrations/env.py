@@ -17,6 +17,7 @@ from modules.students.models import Student
 from modules.tests.models import Test, test_questions
 from modules.questions.models import Question
 from modules.results.models import ExamResult
+from modules.storage.models import Audio
 
 from database import Base, DATABASE_URL
 

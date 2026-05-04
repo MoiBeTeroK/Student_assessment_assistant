@@ -1,27 +1,31 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 class QuestionAnalysis(BaseModel):
-    id_question: int
-    type: str
-    answer_st: str
+    id_audio: int
     similarity: float
     term_coverage: float
     speech_coherence: float
     question_rec_grade: int
-    comment: str
+    comment: Optional[str] = None
 
 class ExamResultBase(BaseModel):
     id_student: int
     id_test: int
-    rec_grade: float
-    final_grade: float
+    rec_grade: Optional[float] = None
+    final_grade: Optional[float] = None
     date: datetime
-    analitics_data: List[QuestionAnalysis]
+    analitics_data: Optional[List[QuestionAnalysis]] = None
 
-class ExamResultCreate(ExamResultBase):
-    pass
+class ExamResultAll(BaseModel):
+    id_result: int
+    final_grade: Optional[float] = None
+    analitics_data: Optional[List[QuestionAnalysis]] = None
+
+class ExamResultCreate(BaseModel):
+    id_student: int
+    id_test: int
 
 class ExamResultOut(ExamResultBase):
     id_result: int
@@ -29,14 +33,17 @@ class ExamResultOut(ExamResultBase):
     class Config:
         from_attributes = True
 
-class StudentAnswerInput(BaseModel):
-    id_question: int
-    answer_text: str
+class StudentAudioInput(BaseModel):
+    id_audio: int
 
 class CalculateExamRequest(BaseModel):
     id_test: int
-    answers: List[StudentAnswerInput]
+    id_result: int
+    audio_ids: List[int] 
 
 class CalculationResponse(BaseModel):
     rec_grade: int
     analitics_data: List[QuestionAnalysis]
+
+class FinalGradePut(BaseModel):
+    final_grade: float

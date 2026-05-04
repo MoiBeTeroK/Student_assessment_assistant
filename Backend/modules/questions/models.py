@@ -10,5 +10,5 @@ class Question(Base):
     standard_answer = Column(String, nullable=False)
     question_content = Column(String, nullable=False)
 
-    # Связь с дисциплиной
     discipline = relationship("modules.disciplines.models.Discipline", back_populates="questions")
+    audios = relationship("modules.storage.models.Audio", back_populates="question")

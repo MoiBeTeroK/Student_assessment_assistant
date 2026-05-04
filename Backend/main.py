@@ -6,6 +6,7 @@ from modules.students.router import router as students_router
 from modules.tests.router import router as tests_router
 from modules.questions.router import router as questions_router
 from modules.results.router import router as results_router
+from modules.storage.router import router as storage_router
 
 app = FastAPI(title="Student assessment assistant")
 
@@ -30,6 +31,7 @@ app.include_router(students_router)
 app.include_router(tests_router)
 app.include_router(questions_router)
 app.include_router(results_router)
+app.include_router(storage_router)
 
 @app.get("/", tags=["Root"])
 async def root():

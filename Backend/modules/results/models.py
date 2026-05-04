@@ -19,3 +19,4 @@ class ExamResult(Base):
 
     student = relationship("modules.students.models.Student", back_populates="exam_results")
     test = relationship("modules.tests.models.Test", back_populates="exam_results")
+    audios = relationship("modules.storage.models.Audio", back_populates="exam_result")

@@ -3,10 +3,8 @@ services:
     image: postgres:15
     container_name: main_db
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123"
-      POSTGRES_DB: diplom_db
+    env_file:
+      - ./Backend/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -14,12 +12,16 @@ services:
 
   backend:
     build: ./Backend
+    env_file:
+      - ./Backend/.env
+    environment:
+      - TZ=Europe/Moscow
     container_name: main_backend
     restart: always
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://postgres:123@db:5432/diplom_db
+    volumes:
+      - ./Backend:/app
     depends_on:
       - db
 
