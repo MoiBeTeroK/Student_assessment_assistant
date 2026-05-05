@@ -1,5 +1,10 @@
 # Настройки
 .env
+
+# Кэш
 **/__pycache__/
-recommended_grade/results
+
+# Модели
 recommended_grade/models
+speech_to_text/model
+speech_to_text/silero_vad
