@@ -6,8 +6,8 @@ pydantic==2.13.3
 pymorphy3==2.0.6
 scikit_learn==1.8.0
 SQLAlchemy==2.0.49
-torch==2.10.0
-transformers==4.53.3
+torch==2.1.0
+transformers==4.40.0
 
 boto3==1.34.0
 botocore==1.34.0
@@ -18,3 +18,15 @@ gunicorn
 psycopg2-binary
 python-multipart
 pydantic-settings
+
+# Для аудио
+torchaudio==2.1.0
+datasets==2.19.0
+huggingface_hub==0.23.4
+tokenizers==0.19.1
+speechbrain==1.0.3
+librosa
+soundfile
+pyctcdecode
+deepmultilingualpunctuation
+jiwer

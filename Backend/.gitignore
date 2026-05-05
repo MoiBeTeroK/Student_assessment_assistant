@@ -1,3 +1,5 @@
 # Настройки
 .env
 **/__pycache__/
+recommended_grade/results
+recommended_grade/models
