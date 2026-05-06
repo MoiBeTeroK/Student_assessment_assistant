@@ -7,7 +7,8 @@ from database import get_db
 from modules.results.models import ExamResult
 from modules.results.schemas import (
     ExamResultCreate, ExamResultOut, 
-    CalculateExamRequest, CalculationResponse, ExamResultAll, FinalGradePut
+    CalculateExamRequest, CalculationResponse, ExamResultAll, 
+    FinalGradePut, ExamStartResponse
 )
 from modules.students.models import Student
 from modules.questions.models import Question
@@ -78,38 +79,38 @@ def calculate_results(data: CalculateExamRequest, db: Session = Depends(get_db))
         "analitics_data": final_analytics
     }
 
-@router.post("/", response_model=ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена (после расчета)")
-def create_exam_result(result_data: ExamResultAll, db: Session = Depends(get_db)):
-    # Проверяем, существует ли студент
-    student = db.query(Student).filter(Student.id_student == result_data.id_student).first()
-    if not student:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Студент с ID {result_data.id_student} не найден."
-        )
+# @router.post("/", response_model=ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена (после расчета)")
+# def create_exam_result(result_data: ExamResultAll, db: Session = Depends(get_db)):
+#     # Проверяем, существует ли студент
+#     student = db.query(Student).filter(Student.id_student == result_data.id_student).first()
+#     if not student:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"Студент с ID {result_data.id_student} не найден."
+#         )
 
-    # Проверяем, существует ли тест
-    test = db.query(Test).filter(Test.id_test == result_data.id_test).first()
-    if not test:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Тест с ID {result_data.id_test} не найден."
-        )
+#     # Проверяем, существует ли тест
+#     test = db.query(Test).filter(Test.id_test == result_data.id_test).first()
+#     if not test:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"Тест с ID {result_data.id_test} не найден."
+#         )
 
-    new_result = ExamResult(**result_data.model_dump())
+#     new_result = ExamResult(**result_data.model_dump())
     
-    try:
-        db.add(new_result)
-        db.commit()
-        db.refresh(new_result)
-        return new_result
+#     try:
+#         db.add(new_result)
+#         db.commit()
+#         db.refresh(new_result)
+#         return new_result
         
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при сохранении результата в базу данных."
-        )
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Ошибка при сохранении результата в базу данных."
+#         )
 
 @router.get("/student/{student_id}", response_model=List[ExamResultOut], summary="Получить все результаты студента")
 def get_student_results(student_id: int, db: Session = Depends(get_db)):
@@ -141,7 +142,7 @@ def get_result_by_id(result_id: int, db: Session = Depends(get_db)):
         )
     return result
 
-@router.post("/start", response_model=ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Инициализировать начало экзамена")
+@router.post("/start", response_model=ExamStartResponse, status_code=status.HTTP_201_CREATED, summary="Инициализировать начало экзамена")
 def start_exam(data: ExamResultCreate, db: Session = Depends(get_db)):
     # Проверяем существование студента
     student = db.query(Student).filter(Student.id_student == data.id_student).first()
@@ -159,7 +160,6 @@ def start_exam(data: ExamResultCreate, db: Session = Depends(get_db)):
             detail=f"Тест с ID {data.id_test} не найден"
         )
 
-    # Создаем запись с текущим временем
     new_result = ExamResult(
         id_student=data.id_student,
         id_test=data.id_test,

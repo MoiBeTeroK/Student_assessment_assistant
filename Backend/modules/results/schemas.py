@@ -27,6 +27,9 @@ class ExamResultCreate(BaseModel):
     id_student: int
     id_test: int
 
+class ExamStartResponse(BaseModel):
+    id_result: int
+    
 class ExamResultOut(ExamResultBase):
     id_result: int
 
