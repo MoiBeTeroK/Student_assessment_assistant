@@ -75,8 +75,10 @@ export const SettingsForm = ({currentUser}) => {
                     <Box
                         onClick={addDiscipline}
                         sx={{
-                            backgroundColor: 'rgba(63,89,119,0.3)',
-                            border: '1.5px solid #2A2A2A',
+                            color: '#2A2A2A',
+                            borderColor: '#2A2A2A',
+                            backgroundColor: '#F9F5ED',
+                            border: '1.5px solid',
                             borderRadius: '10px',
                             width: 220,
                             minHeight: 120,
@@ -86,7 +88,10 @@ export const SettingsForm = ({currentUser}) => {
                             flexDirection: 'row',
                             gap: 2,
                             cursor: 'pointer',
-                            '&:hover': { backgroundColor: 'rgba(63,89,119,0.4)' },
+                            '&:hover': {
+                                backgroundColor: 'rgba(249,245,237,0.5)',
+                                borderColor: '#F9F5ED',
+                            },
                         }}
                     >
                         <AddIcon sx={{ color: '#2A2A2A', fontSize: 28 }} />

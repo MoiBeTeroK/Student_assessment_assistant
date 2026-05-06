@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const INITIAL_DISCIPLINES = [
     { id: 1, name: 'Компьютерные сети', active: true },
-    { id: 2, name: 'Распределенные задачи и ...', active: false },
+    { id: 2, name: 'Распределенные задачи и алгоритмы', active: false },
     { id: 3, name: 'Компьютерные сети', active: false },
     { id: 4, name: 'Компьютерные сети', active: false },
     { id: 5, name: 'Компьютерные сети', active: false },
@@ -33,7 +33,7 @@ export const useSettings = (correntUser) => {
 
     const toggleActive = (id) => {
         setDisciplines((prev) =>
-            prev.map((d) => (d.id === id ? { ...d, active: !d.active } : d))
+            prev.map((d) => ({ ...d, active: d.id === id ? !d.active : false }))
         );
     };
 

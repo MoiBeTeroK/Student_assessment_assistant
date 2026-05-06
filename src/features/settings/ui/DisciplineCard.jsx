@@ -55,6 +55,10 @@ export const DisciplineCard = ({ discipline, onEdit, onDelete, onToggleActive })
                     color: '#2A2A2A',
                     mt: 1,
                     lineHeight: 1.4,
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                 }}
             >
                 {discipline.name}
