@@ -9,10 +9,12 @@ config.py — централизованная конфигурация путе
 from pathlib import Path
 import platform
 
-if platform.system() == "Windows":
-    BASE_DIR = Path("D:/CoursePaper")
-else:
-    BASE_DIR = Path.home() / "Tom_D/CoursePaper"
+# if platform.system() == "Windows":
+#     BASE_DIR = Path("D:/CoursePaper")
+# else:
+#     BASE_DIR = Path.home() / "Tom_D/CoursePaper"
+CURRENT_FILE_PATH = Path(__file__).resolve()
+BASE_DIR = CURRENT_FILE_PATH.parent.parent
 
 RECORD_DIR   = BASE_DIR / "my_recorded_waw"
 MODEL_DIR    = BASE_DIR / "model" / "wav2vec2_golos_002"

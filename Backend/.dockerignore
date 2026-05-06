@@ -1,3 +1,6 @@
 **/__pycache__/
 .env
 .gitignore
+speech_to_text/model/
+speech_to_text/silero_vad/
+venv_test/

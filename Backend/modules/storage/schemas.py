@@ -13,6 +13,12 @@ class AudioCreate(AudioBase):
 class AudioUploadResponse(BaseModel):
     url: str
     filename: str
+    id_audio: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+class AudioFullResponse(AudioBase):
     id_audio: int
 
     class Config:

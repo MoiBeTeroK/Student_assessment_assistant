@@ -22,6 +22,8 @@ services:
       - "8000:8000"
     volumes:
       - ./Backend:/app
+      - ./Backend/speech_to_text/model:/app/speech_to_text/model
+      - ./Backend/speech_to_text/silero_vad:/app/speech_to_text/silero_vad
     depends_on:
       - db
 
