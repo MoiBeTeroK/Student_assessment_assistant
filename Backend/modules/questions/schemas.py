@@ -1,18 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 
-class QuestionBase(BaseModel):
+class QuestionPartial(BaseModel):
+    id_discipline: Optional[int] = None
+    standard_answer: Optional[str] = None
+    question_content: Optional[str] = None
+    complexity_score: Optional[float] = None
+
+class QuestionPatch(QuestionPartial):
+    pass
+
+class QuestionBase(QuestionPartial):
     id_discipline: int
-    standard_answer: str
     question_content: str
 
 class QuestionCreate(QuestionBase):
     pass
 
-class QuestionUpdate(BaseModel):
-    id_discipline: int
-    standard_answer: str
-    question_content: str
-    
 class QuestionOut(QuestionBase):
     id_question: int
 

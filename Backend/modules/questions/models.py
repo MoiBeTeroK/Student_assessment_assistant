@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -7,8 +7,10 @@ class Question(Base):
 
     id_question = Column(Integer, primary_key=True, index=True)
     id_discipline = Column(Integer, ForeignKey("disciplines.id_discipline"), nullable=False)
-    standard_answer = Column(String, nullable=False)
+    standard_answer = Column(String, nullable=True)
     question_content = Column(String, nullable=False)
+
+    complexity_score = Column(Numeric(precision=2, scale=1), nullable=True)
 
     discipline = relationship("modules.disciplines.models.Discipline", back_populates="questions")
     audios = relationship("modules.storage.models.Audio", back_populates="question")

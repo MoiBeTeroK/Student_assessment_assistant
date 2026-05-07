@@ -5,9 +5,10 @@ from sqlalchemy.orm import joinedload
 
 from database import get_db
 from modules.tests.models import Test
-from modules.tests.schemas import TestCreate, TestUpdate, TestOut, TestIdOnly
+from modules.tests.schemas import TestCreate, TestUpdate, TestOut, TestIdOnly, TestGenerateRequest
 from modules.disciplines.models import Discipline
 from modules.questions.models import Question
+from modules.tests.service import generate_balanced_tests
 
 
 router = APIRouter(
@@ -41,7 +42,6 @@ def get_tests_by_discipline(discipline_id: int, db: Session = Depends(get_db)):
 # Создать новый билет
 @router.post("/", response_model=TestIdOnly, status_code=status.HTTP_201_CREATED, summary="Создать новый билет")
 def create_test(test_data: TestCreate, db: Session = Depends(get_db)):
-    # Проверяем, существует ли такая дисциплина вообще
     discipline = db.query(Discipline).filter(
         Discipline.id_discipline == test_data.id_discipline
     ).first()
@@ -70,18 +70,14 @@ def create_test(test_data: TestCreate, db: Session = Depends(get_db)):
             id_discipline=test_data.id_discipline
         )
 
-        # ДОБАВЬ ЭТОТ БЛОК:
         if test_data.question_ids:
-            # Ищем вопросы в базе
             questions = db.query(Question).filter(
                 Question.id_question.in_(test_data.question_ids)
             ).all()
 
-            # Проверка: все ли вопросы нашлись?
             if len(questions) != len(test_data.question_ids):
                 raise HTTPException(status_code=404, detail="Некоторые вопросы не найдены")
             
-            # Валидация: принадлежат ли вопросы этой дисциплине?
             for q in questions:
                 if q.id_discipline != test_data.id_discipline:
                     raise HTTPException(
@@ -106,24 +102,21 @@ def create_test(test_data: TestCreate, db: Session = Depends(get_db)):
     
 @router.patch("/{test_id}", response_model=TestOut, summary="Обновить билет и его вопросы")
 def update_test(test_id: int, test_data: TestUpdate, db: Session = Depends(get_db)):
-    # 1. Ищем существующий билет
     test = db.query(Test).filter(Test.id_test == test_id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Билет не найден")
 
     try:
-        # 2. Если пришел новый номер билета или дисциплина — обновляем
         if test_data.test_number is not None:
             test.test_number = test_data.test_number
         
         if test_data.id_discipline is not None:
-            # Проверяем, существует ли новая дисциплина
             disp = db.query(Discipline).filter(Discipline.id_discipline == test_data.id_discipline).first()
             if not disp:
                 raise HTTPException(status_code=404, detail="Новая дисциплина не найдена")
             test.id_discipline = test_data.id_discipline
 
-        # 3. Обновляем вопросы (перезаписываем список)
+        # Обновляем вопросы
         if test_data.question_ids is not None:
             # Ищем новые вопросы
             new_questions = db.query(Question).filter(
@@ -143,13 +136,11 @@ def update_test(test_id: int, test_data: TestUpdate, db: Session = Depends(get_d
                         detail=f"Вопрос {q.id_question} не подходит к дисциплине билета"
                     )
 
-            # Перезаписываем связь (SQLAlchemy сама удалит старые записи в связующей таблице и добавит новые)
             test.questions = new_questions
 
         db.commit()
         db.refresh(test)
         return test
-
     except HTTPException as he:
         db.rollback()
         raise he
@@ -179,3 +170,58 @@ def delete_test(test_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Не удалось удалить билет из-за ошибки базы данных."
         )
+    
+@router.post("/generate-confirm", response_model=List[TestOut], summary="Массовая генерация билетов")
+def confirm_generated_tests(request: TestGenerateRequest, db: Session = Depends(get_db)):
+    discipline = db.query(Discipline).filter(Discipline.id_discipline == request.id_discipline).first()
+    if not discipline:
+        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
+
+    questions_db = db.query(Question).filter(Question.id_discipline == request.id_discipline).all()
+    if len(questions_db) < request.questions_per_test:
+        raise HTTPException(status_code=400, detail="Недостаточно вопросов")
+
+    try:
+        generated_data = generate_balanced_tests(
+            questions=questions_db,
+            num_tests=request.num_tests,
+            questions_per_test=request.questions_per_test
+        )
+
+        # Поиск свободных номеров
+        occupied_numbers = db.query(Test.test_number).filter(
+            Test.id_discipline == request.id_discipline
+        ).all()
+        occupied_set = {n[0] for n in occupied_numbers}
+
+        available_numbers = []
+        current_num = 1
+        # Ищем номера, пока не наберем столько, сколько захотел пользователь
+        while len(available_numbers) < request.num_tests:
+            if current_num not in occupied_set:
+                available_numbers.append(current_num)
+            current_num += 1
+
+        created_tests = []
+        for i, item in enumerate(generated_data):
+            assigned_number = available_numbers[i]
+            
+            new_test = Test(
+                test_number=assigned_number,
+                id_discipline=request.id_discipline
+            )
+            
+            for q_obj in item["questions"]:
+                new_test.questions.append(q_obj)
+            
+            db.add(new_test)
+            created_tests.append(new_test)
+        db.commit()
+
+        for t in created_tests:
+            db.refresh(t)
+
+        return created_tests
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка сохранения: {str(e)}")

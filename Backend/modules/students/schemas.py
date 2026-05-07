@@ -9,7 +9,6 @@ class StudentCreate(StudentBase):
     pass
 
 class StudentUpdate(BaseModel):
-    # Мы явно указываем Optional и значение по умолчанию None
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     group: Optional[str] = Field(None, min_length=1, max_length=10)
 

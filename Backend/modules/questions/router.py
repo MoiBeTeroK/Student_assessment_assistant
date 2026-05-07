@@ -5,7 +5,7 @@ from typing import List
 from database import get_db
 from modules.questions.models import Question
 from modules.disciplines.models import Discipline
-from modules.questions.schemas import QuestionCreate, QuestionOut, QuestionUpdate
+from modules.questions.schemas import QuestionCreate, QuestionOut, QuestionPatch
 
 router = APIRouter(
     prefix="/questions",
@@ -14,7 +14,6 @@ router = APIRouter(
 
 @router.post("/", response_model=QuestionOut, status_code=status.HTTP_201_CREATED, summary="Создать новый вопрос")
 def create_question(question_data: QuestionCreate, db: Session = Depends(get_db)):
-    # 1. Проверяем, существует ли дисциплина, к которой привязываем вопрос
     discipline = db.query(Discipline).filter(
         Discipline.id_discipline == question_data.id_discipline
     ).first()
@@ -25,8 +24,7 @@ def create_question(question_data: QuestionCreate, db: Session = Depends(get_db)
             detail=f"Дисциплина с ID {question_data.id_discipline} не найдена. Невозможно создать вопрос."
         )
 
-    # 2. ПРОВЕРКА НА ДУБЛИКАТ
-    # Ищем, нет ли уже такого же вопроса в этой дисциплине
+    # Проверка, нет ли уже такого же вопроса в этой дисциплине
     existing_question = db.query(Question).filter(
         Question.id_discipline == question_data.id_discipline,
         Question.question_content == question_data.question_content
@@ -38,18 +36,13 @@ def create_question(question_data: QuestionCreate, db: Session = Depends(get_db)
             detail="Такой вопрос уже существует в данной дисциплине."
         )
 
-    # 3. Создаем экземпляр модели Question
     new_question = Question(**question_data.model_dump())
     
     try:
-        # Добавляем в сессию и фиксируем изменения
         db.add(new_question)
         db.commit()
-        
-        # Обновляем объект, чтобы получить сгенерированный базой id_question
         db.refresh(new_question)
         return new_question
-        
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -63,7 +56,6 @@ def get_all_questions(db: Session = Depends(get_db)):
 
 @router.get("/discipline/{discipline_id}", response_model=List[QuestionOut], summary="Получить вопросы по дисциплине")
 def get_questions_by_discipline(discipline_id: int, db: Session = Depends(get_db)):
-    # Проверяем, существует ли дисциплина вообще
     discipline = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
     
     if not discipline:
@@ -76,14 +68,8 @@ def get_questions_by_discipline(discipline_id: int, db: Session = Depends(get_db
 
 @router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить вопрос по ID")
 def delete_question(question_id: int, db: Session = Depends(get_db)):
-    """
-    Удаляет вопрос из базы данных по его уникальному ID.
-    """
-    
-    # 1. Ищем вопрос в базе
     question = db.query(Question).filter(Question.id_question == question_id).first()
     
-    # 2. Если вопрос не найден — кидаем 404
     if not question:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -91,13 +77,10 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
         )
 
     try:
-        # 3. Удаляем и фиксируем
         db.delete(question)
         db.commit()
-        
-        # Для DELETE с кодом 204 возвращать тело ответа не нужно
+
         return None
-        
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -105,9 +88,8 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
             detail="Ошибка при удалении вопроса из базы данных."
         )
     
-@router.put("/{question_id}", response_model=QuestionOut, summary="Изменить вопрос и ответ")
-def update_question(question_id: int, updated_data: QuestionUpdate, db: Session = Depends(get_db)):
-    # 1. Ищем существующий вопрос
+@router.patch("/{question_id}", response_model=QuestionOut, summary="Частично изменить вопрос")
+def patch_question(question_id: int, updated_data: QuestionPatch, db: Session = Depends(get_db)):
     question = db.query(Question).filter(Question.id_question == question_id).first()
     
     if not question:
@@ -116,30 +98,35 @@ def update_question(question_id: int, updated_data: QuestionUpdate, db: Session 
             detail=f"Вопрос с ID {question_id} не найден."
         )
 
-    # 2. Проверяем, существует ли новая дисциплина (если её меняют)
-    discipline = db.query(Discipline).filter(Discipline.id_discipline == updated_data.id_discipline).first()
-    if not discipline:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"Дисциплина с ID {updated_data.id_discipline} не найдена."
-        )
+    # Проверка диапазона для complexity_score, если значение передано, проверяем его
+    if updated_data.complexity_score is not None:
+        if not (0.1 <= updated_data.complexity_score <= 1.0):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Недопустимое значение сложности: {updated_data.complexity_score}. Должно быть от 0.1 до 1.0."
+            )
 
-    # 3. Проверка на дубликат (чтобы не изменить вопрос на такой, который уже есть)
-    duplicate = db.query(Question).filter(
-        Question.id_discipline == updated_data.id_discipline,
-        Question.question_content == updated_data.question_content,
-        Question.id_question != question_id  # Исключаем сам редактируемый вопрос
-    ).first()
+    # Проверка дисциплины (если меняется)
+    if updated_data.id_discipline is not None:
+        discipline = db.query(Discipline).filter(Discipline.id_discipline == updated_data.id_discipline).first()
+        if not discipline:
+            raise HTTPException(status_code=404, detail="Дисциплина не найдена.")
 
-    if duplicate:
-        raise HTTPException(
-            status_code=400,
-            detail="Такой вопрос уже существует в этой дисциплине."
-        )
+    # Проверка на дубликат (если меняется контент или дисциплина)
+    if updated_data.question_content or updated_data.id_discipline:
+        check_content = updated_data.question_content or question.question_content
+        check_discipline = updated_data.id_discipline or question.id_discipline
+        
+        duplicate = db.query(Question).filter(
+            Question.id_discipline == check_discipline,
+            Question.question_content == check_content,
+            Question.id_question != question_id
+        ).first()
 
-    # 4. Обновляем поля
-    # model_dump() вытащит все данные из схемы в виде словаря
-    update_dict = updated_data.model_dump()
+        if duplicate:
+            raise HTTPException(status_code=400, detail="Такой вопрос уже существует.")
+
+    update_dict = updated_data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(question, key, value)
 
@@ -149,7 +136,4 @@ def update_question(question_id: int, updated_data: QuestionUpdate, db: Session 
         return question
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Ошибка при обновлении данных в базе."
-        )
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении в базу.")

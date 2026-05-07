@@ -16,7 +16,8 @@ class TestUpdate(BaseModel):
 class QuestionShortOut(BaseModel):
     id_question: int
     question_content: str 
-    standard_answer: str
+    standard_answer: Optional[str] = None
+    complexity_score: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -35,3 +36,8 @@ class TestOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TestGenerateRequest(BaseModel):
+    id_discipline: int
+    num_tests: int
+    questions_per_test: int

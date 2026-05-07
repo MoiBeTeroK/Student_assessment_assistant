@@ -14,15 +14,15 @@ from speech_to_text.speech_to_text_main.punctuation import init_punctuation
 
 app = FastAPI(title="Student assessment assistant")
 
-@app.on_event("startup")
-async def load_stt_models():
-    print("Предзагрузка Speech-To-Text моделей...")
-    init_asr(str(MODEL_DIR))
+# @app.on_event("startup")
+# async def load_stt_models():
+#     print("Предзагрузка Speech-To-Text моделей...")
+#     init_asr(str(MODEL_DIR))
 
-    print("Загружается модель пунктуации...")
-    init_punctuation()
+#     print("Загружается модель пунктуации...")
+#     init_punctuation()
 
-    print("Все модели успешно загружены")
+#     print("Все модели успешно загружены")
 
 origins = [
     "http://localhost:3000",
