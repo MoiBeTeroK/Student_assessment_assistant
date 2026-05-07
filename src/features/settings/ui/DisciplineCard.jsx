@@ -11,7 +11,7 @@ export const DisciplineCard = ({ discipline, onEdit, onDelete, onToggleActive })
                 border: discipline.active ? '2.5px solid #2A2A2A' : '1.5px solid #2A2A2A',
                 p: 1.5,
                 width: 220,
-                minHeight: 120,
+                height: 120,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
