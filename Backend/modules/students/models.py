@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -7,6 +7,7 @@ class Student(Base):
 
     id_student = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    group = Column(String(10), nullable=False)
+    id_group = Column(Integer, ForeignKey("groups.id_group"), nullable=False)
 
+    group_rel = relationship("modules.groups.models.Group", back_populates="students")
     exam_results = relationship("modules.results.models.ExamResult", back_populates="student")

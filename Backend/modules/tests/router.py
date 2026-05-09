@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.orm import joinedload
+from urllib.parse import quote
 
 from database import get_db
 from modules.tests.models import Test
@@ -9,6 +11,8 @@ from modules.tests.schemas import TestCreate, TestUpdate, TestOut, TestIdOnly, T
 from modules.disciplines.models import Discipline
 from modules.questions.models import Question
 from modules.tests.service import generate_balanced_tests
+from .exporter import generate_tests_docx
+from .exporter import generate_tests_pdf
 
 
 router = APIRouter(
@@ -225,3 +229,60 @@ def confirm_generated_tests(request: TestGenerateRequest, db: Session = Depends(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка сохранения: {str(e)}")
+    
+@router.get("/export/docx/{discipline_id}", summary="Экспорт всех билетов дисциплины в DOCX")
+def export_tests_to_docx(discipline_id: int, db: Session = Depends(get_db)):
+    discipline = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
+    if not discipline:
+        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
+
+    tests = db.query(Test).options(joinedload(Test.questions))\
+        .filter(Test.id_discipline == discipline_id)\
+        .order_by(Test.test_number).all()
+
+    if not tests:
+        raise HTTPException(status_code=404, detail="Билеты не найдены")
+
+    # Генерируем документ
+    file_stream = generate_tests_docx(discipline.name_discipline, tests)
+    
+    # --- ИСПРАВЛЕНИЕ ОШИБКИ ТУТ ---
+    # Кодируем имя файла, чтобы избежать UnicodeEncodeError
+    filename = f"Билеты_{discipline.name_discipline}.docx"
+    encoded_filename = quote(filename) 
+    
+    return StreamingResponse(
+        file_stream,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            # Используем filename* для поддержки UTF-8 (русских букв)
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+        }
+    )
+
+@router.get("/export/pdf/{discipline_id}", summary="Экспорт всех билетов дисциплины в PDF")
+def export_tests_to_pdf(discipline_id: int, db: Session = Depends(get_db)):
+    discipline = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
+    if not discipline:
+        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
+
+    tests = db.query(Test).options(joinedload(Test.questions))\
+        .filter(Test.id_discipline == discipline_id)\
+        .order_by(Test.test_number).all()
+
+    if not tests:
+        raise HTTPException(status_code=404, detail="Билеты не найдены")
+
+    file_stream = generate_tests_pdf(discipline.name_discipline, tests)
+    
+    # Аналогичное исправление для PDF
+    filename = f"Билеты_{discipline.name_discipline}.pdf"
+    encoded_filename = quote(filename)
+    
+    return StreamingResponse(
+        file_stream,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+        }
+    )

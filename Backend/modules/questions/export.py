@@ -1,113 +1,110 @@
 import io
+import os
 from docx import Document
 from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from fpdf import FPDF
 
+# --- КОНСТАНТЫ ---
+HEADER_TEXT = (
+    "МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ\n"
+    "ФГБОУ ВО «Кубанский государственный университет»\n"
+    "Кафедра вычислительных технологий\n"
+)
+FONT_NAME_DOCX = 'Times New Roman'
+FONT_NAME_PDF = 'TimesNewRoman'
+
+# --- КЛАСС PDF ---
 class PDF(FPDF):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        base_dir = os.getcwd()
+        font_path = lambda f: os.path.join(base_dir, "static", "fonts", f)
+        
         try:
-            self.add_font('TimesNewRoman', '', 'static/fonts/TIMES.TTF', uni=True)
-            self.add_font('TimesNewRoman', 'B', 'static/fonts/TIMESBD.TTF', uni=True)
+            self.add_font(FONT_NAME_PDF, '', font_path("TIMES.TTF"), uni=True)
+            self.add_font(FONT_NAME_PDF, 'B', font_path("TIMESBD.TTF"), uni=True)
         except Exception as e:
-            print(f"Ошибка загрузки шрифтов: {e}")
+            # Если кириллица не поддерживается, FPDF упадет при печати
+            print(f"Предупреждение: шрифты не загружены ({e})")
 
-    def header(self):
-        # Оставляем пустым, чтобы шапка была только на первой странице
-        pass
+# --- ВСПОМОГАТЕЛЬНАЯ ЛОГИКА ---
+def get_title(discipline_name):
+    return f"Вопросы к экзамену по дисциплине\n«{discipline_name}»"
 
+# --- ГЕНЕРАЦИЯ DOCX ---
 def generate_docx(discipline_name: str, questions: list):
     doc = Document()
     
-    # Настройка полей страницы
+    # Настройка полей
     section = doc.sections[0]
-    section.left_margin = Cm(2)
-    section.right_margin = Cm(1)
+    section.left_margin, section.right_margin = Cm(2), Cm(1)
 
-    # Шапка
-    header_para = doc.add_paragraph()
-    header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    header_text = (
-        "МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ\n"
-        "ФГБОУ ВО «Кубанский государственный университет»\n"
-        "Кафедра вычислительных технологий"
-    )
-    run = header_para.add_run(header_text)
-    run.font.name = 'Times New Roman'
-    run.font.size = Pt(12)
-
-    spacer = doc.add_paragraph()
-    spacer.paragraph_format.space_before = Pt(0)
-    spacer.paragraph_format.space_after = Pt(0)
-    spacer.paragraph_format.line_spacing = 1.0
-
-    # Заголовок
-    title_para = doc.add_paragraph()
-    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title_run = title_para.add_run(f"Вопросы к экзамену по дисциплине\n«{discipline_name}»")
-    title_run.bold = True
-    title_run.font.name = 'Times New Roman'
-    title_run.font.size = Pt(12)
-
-    for i, q_text in enumerate(questions, 1):
+    def add_para(text, size=12, bold=False, align=None, indent=0, space_after=0):
         p = doc.add_paragraph()
-        
-        # Убираем все внешние отступы
-        p.paragraph_format.left_indent = 0
-        # Отступ 1.25 см
-        p.paragraph_format.first_line_indent = Cm(1.25)
-        # Межстрочный интервал и отступ после
-        p.paragraph_format.space_after = Pt(2)
+        run = p.add_run(text)
+        run.font.name = FONT_NAME_DOCX
+        run.font.size = Pt(size)
+        run.bold = bold
+        if align: p.alignment = align
+        if indent: p.paragraph_format.first_line_indent = Cm(indent)
+        p.paragraph_format.space_after = Pt(space_after)
         p.paragraph_format.line_spacing = 1.0
-        
-        q_run = p.add_run(f"{i}. {q_text}")
-        q_run.font.name = 'Times New Roman'
-        q_run.font.size = Pt(12)
+        return p
+
+    # 1. Шапка
+    add_para(HEADER_TEXT, align=WD_ALIGN_PARAGRAPH.CENTER)
+    
+    # 2. Заголовок
+    add_para(get_title(discipline_name), bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=10)
+
+    # 3. Список вопросов
+    for i, q_text in enumerate(questions, 1):
+        add_para(f"{i}. {q_text}", indent=1.25, space_after=2)
 
     file_stream = io.BytesIO()
     doc.save(file_stream)
     file_stream.seek(0)
     return file_stream
 
+# --- ГЕНЕРАЦИЯ PDF ---
+# --- ГЕНЕРАЦИЯ PDF ---
 def generate_pdf(discipline_name: str, questions: list):
     pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Стандартный левый край
-    left_margin = 10
-    pdf.set_left_margin(left_margin)
-    
-    font_name = "TimesNewRoman" if "timesnewroman" in pdf.fonts else "Helvetica"
-    
-    # Шапка
-    pdf.set_font(font_name, "B", 12)
-    pdf.multi_cell(0, 5, 
-        "МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ\n"
-        "ФГБОУ ВО «Кубанский государственный университет»\n"
-        "Кафедра вычислительных технологий", 
-        align="C")
-    pdf.ln(10)
-    
-    pdf.multi_cell(0, 7, f"Вопросы к экзамену по дисциплине\n«{discipline_name}»", align="C")
-    pdf.ln(5)
+    # Активируем жирный шрифт для шапки
+    pdf.set_font(FONT_NAME_PDF, 'B', 11) # Можно 11 для компактности
 
-    pdf.set_font(font_name, "", 12)
+    # 1. Шапка (h=4 вместо 5 сделает строки внутри шапки чуть ближе)
+    pdf.multi_cell(0, 4, HEADER_TEXT, align="C")
+    
+    # --- МИНИМАЛЬНЫЙ ОТСТУП ---
+    # Поставил 3мм. Если нужно ВПЛОТНУЮ, ставь 1 или 2.
+    pdf.ln(3) 
+    
+    # 2. Заголовок
+    # h=5 вместо 7 подтянет строки заголовка друг к другу
+    pdf.multi_cell(0, 5, get_title(discipline_name), align="C")
+    
+    # Небольшой отступ перед списком вопросов
+    pdf.ln(2)
+
+    # 3. Вопросы
+    pdf.set_font(FONT_NAME_PDF, '', 12)
     indent_width = 12.5  # 1.25 см
     
     for i, q_text in enumerate(questions, 1):
-        text = f"{i}. {q_text}"
-        
-        # Печатаем отступ
-        pdf.cell(indent_width)
-        
-        # Печатаем сам текст. 
-        pdf.multi_cell(0, 5, text)
-        
-        # Интервал между вопросами
+        # Используем l_margin для корректного позиционирования
+        pdf.set_x(pdf.l_margin + indent_width) 
+        pdf.multi_cell(0, 5, f"{i}. {q_text}")
         pdf.ln(1)
 
-    pdf_bytes = bytes(pdf.output())
-    result = io.BytesIO(pdf_bytes)
-    result.seek(0)
-    return result
+    # Генерация финального потока
+    pdf_output = pdf.output()
+    # Обработка разных версий fpdf2 (bytes vs bytearray)
+    if isinstance(pdf_output, str):
+        pdf_output = pdf_output.encode('latin-1')
+        
+    return io.BytesIO(pdf_output)

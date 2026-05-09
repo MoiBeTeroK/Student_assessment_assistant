@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from urllib.parse import quote
 from typing import List
+from enum import Enum
 
 from database import get_db
 from modules.questions.models import Question
@@ -16,6 +18,11 @@ router = APIRouter(
     prefix="/questions",
     tags=["Questions"]
 )
+
+class ExportFormat(str, Enum):
+    docx = "docx"
+    pdf = "pdf"
+
 
 @router.post("/", response_model=List[QuestionOut], status_code=status.HTTP_201_CREATED, summary="Создать новый вопрос")
 def create_questions_bulk(questions_data: List[QuestionCreate], db: Session = Depends(get_db)):
@@ -210,13 +217,12 @@ async def preview_questions_from_file(id_discipline: int, file: UploadFile = Fil
         print(f"Ошибка парсинга: {e}")
         raise HTTPException(status_code=500, detail=f"Ошибка при обработке файла: {str(e)}")
     
-@router.get("/export/{id_discipline}")
+@router.get("/export/{id_discipline}", summary="Экспорт списка вопросов")
 def export_questions(
     id_discipline: int, 
-    format: str = "docx", 
+    format: ExportFormat = Query(ExportFormat.docx, description="Формат файла (docx или pdf)"), 
     db: Session = Depends(get_db)
 ):
-    # 1. Получаем дисциплину и вопросы
     discipline = db.query(Discipline).filter(Discipline.id_discipline == id_discipline).first()
     if not discipline:
         raise HTTPException(status_code=404, detail="Дисциплина не найдена")
@@ -227,26 +233,30 @@ def export_questions(
     if not question_texts:
         raise HTTPException(status_code=400, detail="В дисциплине нет вопросов для экспорта")
 
-    # 2. Генерация файла
-    filename_base = f"Список_вопросов_{discipline.name_discipline.replace(' ', '_')}"
-    
-    if format.lower() == "docx":
-        file_stream = generate_docx(discipline.name_discipline, question_texts)
-        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        filename = f"{filename_base}.docx"
-    elif format.lower() == "pdf":
-        file_stream = generate_pdf(discipline.name_discipline, question_texts)
-        media_type = "application/pdf"
-        filename = f"{filename_base}.pdf"
-    else:
-        raise HTTPException(status_code=400, detail="Неверный формат. Используйте docx или pdf")
+    export_settings = {
+        ExportFormat.docx: {
+            "generator": generate_docx,
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "ext": "docx"
+        },
+        ExportFormat.pdf: {
+            "generator": generate_pdf,
+            "media_type": "application/pdf",
+            "ext": "pdf"
+        }
+    }
 
-    # 3. Кодируем имя файла для корректной передачи кириллицы
-    encoded_filename = urllib.parse.quote(filename)
+    settings = export_settings[format]
+    
+    file_stream = settings["generator"](discipline.name_discipline, question_texts)
+    
+    clean_name = discipline.name_discipline.replace(' ', '_')
+    filename = f"Вопросы_{clean_name}.{settings['ext']}"
+    encoded_filename = quote(filename)
     
     return StreamingResponse(
         file_stream,
-        media_type=media_type,
+        media_type=settings["media_type"],
         headers={
             "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
         }
