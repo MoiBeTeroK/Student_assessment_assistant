@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List
 from sqlalchemy.orm import Session, joinedload
+
 from database import get_db
 from . import models, schemas, parser_students
+
 from modules.groups.models import Group
-from modules.students.models import Student
 
 router = APIRouter(
     prefix="/students",
@@ -13,29 +14,29 @@ router = APIRouter(
 
 @router.post("/", response_model=schemas.StudentOut, summary="Добавить нового студента", deprecated=True)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    db_student = Student(
+    db_student = models.Student(
         name=student.name,
         id_group=student.id_group
     )
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-    return db.query(Student).options(joinedload(Student.group_rel)).filter(Student.id_student == db_student.id_student).first()
+    return db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.id_student == db_student.id_student).first()
 
 @router.get("/", response_model=List[schemas.StudentOut], summary="Получить список всех студентов")
 def read_students(db: Session = Depends(get_db)):
-    return db.query(Student).options(joinedload(Student.group_rel)).all()
+    return db.query(models.Student).options(joinedload(models.Student.group_rel)).all()
 
 @router.get("/{student_id}", response_model=schemas.StudentOut, summary="Получить студента по ID")
 def read_student(student_id: int, db: Session = Depends(get_db)):
-    db_student = db.query(Student).options(joinedload(Student.group_rel)).filter(Student.id_student == student_id).first()
+    db_student = db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.id_student == student_id).first()
     if not db_student:
         raise HTTPException(status_code=404, detail="Студент не найден")
     return db_student
 
-@router.put("/{student_id}", response_model=schemas.StudentOut)
+@router.put("/{student_id}", response_model=schemas.StudentOut, summary="Обновить информацию о студенте")
 def update_student(student_id: int, student_data: schemas.StudentUpdate, db: Session = Depends(get_db)):
-    db_student = db.query(Student).filter(Student.id_student == student_id).first()
+    db_student = db.query(models.Student).filter(models.Student.id_student == student_id).first()
     if not db_student:
         raise HTTPException(status_code=404, detail="Студент не найден")
     
@@ -45,11 +46,11 @@ def update_student(student_id: int, student_data: schemas.StudentUpdate, db: Ses
 
     db.commit()
     db.refresh(db_student)
-    return db.query(Student).options(joinedload(Student.group_rel)).filter(Student.id_student == student_id).first()
+    return db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.id_student == student_id).first()
 
 @router.delete("/{student_id}", summary="Удалить студента")
 def delete_student(student_id: int, db: Session = Depends(get_db)):
-    db_student = db.query(Student).filter(Student.id_student == student_id).first()
+    db_student = db.query(models.Student).filter(models.Student.id_student == student_id).first()
     if not db_student:
         raise HTTPException(status_code=404, detail="Студент не найден")
     
@@ -65,9 +66,8 @@ def patch_students_batch(students_data: List[schemas.StudentImportSchema], db: S
     for item in students_data:
         db_student = None
         if item.id_student:
-            db_student = db.query(Student).filter_by(id_student=item.id_student).first()
+            db_student = db.query(models.Student).filter_by(id_student=item.id_student).first()
 
-        # Поиск или создание группы
         g_name = item.group.group_name
         if g_name not in group_cache:
             db_group = db.query(Group).filter_by(group_name=g_name).first()
@@ -83,7 +83,7 @@ def patch_students_batch(students_data: List[schemas.StudentImportSchema], db: S
             if item.name: db_student.name = item.name
             db_student.id_group = target_group.id_group
         else:
-            db_student = Student(name=item.name, id_group=target_group.id_group)
+            db_student = models.Student(name=item.name, id_group=target_group.id_group)
             db.add(db_student)
         
         db.flush()
@@ -124,14 +124,13 @@ async def import_from_file(file: UploadFile = File(...), db: Session = Depends(g
             
             current_group = group_cache[g_name]
 
-            # Поиск дубликата
-            db_student = db.query(Student).filter_by(
+            db_student = db.query(models.Student).filter_by(
                 name=item["name"], 
                 id_group=current_group.id_group
             ).first()
 
             if not db_student:
-                db_student = Student(name=item["name"], id_group=current_group.id_group)
+                db_student = models.Student(name=item["name"], id_group=current_group.id_group)
                 db.add(db_student)
                 db.flush()
 

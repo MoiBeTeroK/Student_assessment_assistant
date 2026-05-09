@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from modules.disciplines.router import router as disciplines_router
 from modules.students.router import router as students_router
+from modules.groups.router import router as groups_router
 from modules.tests.router import router as tests_router
 from modules.questions.router import router as questions_router
 from modules.results.router import router as results_router
@@ -14,15 +15,15 @@ from speech_to_text.speech_to_text_main.punctuation import init_punctuation
 
 app = FastAPI(title="Student assessment assistant")
 
-# @app.on_event("startup")
-# async def load_stt_models():
-#     print("Предзагрузка Speech-To-Text моделей...")
-#     init_asr(str(MODEL_DIR))
+@app.on_event("startup")
+async def load_stt_models():
+    print("Предзагрузка Speech-To-Text моделей...")
+    init_asr(str(MODEL_DIR))
 
-#     print("Загружается модель пунктуации...")
-#     init_punctuation()
+    print("Загружается модель пунктуации...")
+    init_punctuation()
 
-#     print("Все модели успешно загружены")
+    print("Все модели успешно загружены")
 
 origins = [
     "http://localhost:3000",
@@ -42,6 +43,7 @@ app.add_middleware(
 # Подключаем роутеры
 app.include_router(disciplines_router)
 app.include_router(students_router)
+app.include_router(groups_router)
 app.include_router(tests_router)
 app.include_router(questions_router)
 app.include_router(results_router)

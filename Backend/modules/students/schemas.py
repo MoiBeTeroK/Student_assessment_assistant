@@ -22,7 +22,6 @@ class StudentOut(StudentBase):
         populate_by_name = True
 
 # Импорт данных
-
 class StudentImportSchema(BaseModel):
     id_student: Optional[int] = None
     name: str

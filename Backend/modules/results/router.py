@@ -4,27 +4,23 @@ from datetime import datetime
 from typing import List
 
 from database import get_db
-from modules.results.models import ExamResult
-from modules.results.schemas import (
-    ExamResultCreate, ExamResultOut, 
-    CalculateExamRequest, CalculationResponse, ExamResultAll, 
-    FinalGradePut, ExamStartResponse
-)
+# from dependencies import scorer
+
+from . import models, schemas
+
 from modules.students.models import Student
 from modules.questions.models import Question
-from modules.tests.models import Test, test_questions
+from modules.tests.models import Test
 from modules.storage.models import Audio
-
-from dependencies import scorer
 
 router = APIRouter(
     prefix="/results",
     tags=["Results"]
 )
 
-@router.post("/calculate", response_model=CalculationResponse, summary="Рассчитать предварительную оценку")
-def calculate_results(data: CalculateExamRequest, db: Session = Depends(get_db)):
-    result_entry = db.query(ExamResult).filter(ExamResult.id_result == data.id_result).first()
+@router.post("/calculate", response_model=schemas.CalculationResponse, summary="Рассчитать предварительную оценку")
+def calculate_results(data: schemas.CalculateExamRequest, db: Session = Depends(get_db)):
+    result_entry = db.query(models.ExamResult).filter(models.ExamResult.id_result == data.id_result).first()
     if not result_entry:
         raise HTTPException(status_code=404, detail="Запись результата не найдена")
 
@@ -70,7 +66,7 @@ def calculate_results(data: CalculateExamRequest, db: Session = Depends(get_db))
     
     try:
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Ошибка при сохранении расчетов")
 
@@ -79,88 +75,52 @@ def calculate_results(data: CalculateExamRequest, db: Session = Depends(get_db))
         "analitics_data": final_analytics
     }
 
-# @router.post("/", response_model=ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена (после расчета)")
-# def create_exam_result(result_data: ExamResultAll, db: Session = Depends(get_db)):
-#     # Проверяем, существует ли студент
-#     student = db.query(Student).filter(Student.id_student == result_data.id_student).first()
-#     if not student:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f"Студент с ID {result_data.id_student} не найден."
-#         )
+@router.post("/", response_model=schemas.ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена")
+def create_exam_result(result_data: schemas.ExamResultAll, db: Session = Depends(get_db)):
+    if not db.query(Student).filter(Student.id_student == result_data.id_student).first():
+        raise HTTPException(status_code=404, detail="Студент не найден")
 
-#     # Проверяем, существует ли тест
-#     test = db.query(Test).filter(Test.id_test == result_data.id_test).first()
-#     if not test:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f"Тест с ID {result_data.id_test} не найден."
-#         )
+    if not db.query(Test).filter(Test.id_test == result_data.id_test).first():
+        raise HTTPException(status_code=404, detail="Тест не найден")
 
-#     new_result = ExamResult(**result_data.model_dump())
+    new_result = models.ExamResult(**result_data.model_dump())
     
-#     try:
-#         db.add(new_result)
-#         db.commit()
-#         db.refresh(new_result)
-#         return new_result
-        
-#     except Exception as e:
-#         db.rollback()
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="Ошибка при сохранении результата в базу данных."
-#         )
+    try:
+        db.add(new_result)
+        db.commit()
+        db.refresh(new_result)
+        return new_result
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении результата")
 
-@router.get("/student/{student_id}", response_model=List[ExamResultOut], summary="Получить все результаты студента")
+@router.get("/student/{student_id}", response_model=List[schemas.ExamResultOut], summary="Получить результаты студента")
 def get_student_results(student_id: int, db: Session = Depends(get_db)):
-    student_exists = db.query(Student).filter(Student.id_student == student_id).first()
-    if not student_exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Студент с ID {student_id} не найден"
-        )
+    if not db.query(Student).filter(Student.id_student == student_id).first():
+        raise HTTPException(status_code=404, detail="Студент не найден")
         
-    results = db.query(ExamResult).filter(ExamResult.id_student == student_id).all()
-    
+    results = db.query(models.ExamResult).filter(models.ExamResult.id_student == student_id).all()
     if not results:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"У студента с ID {student_id} пока нет сохраненных результатов"
-        )
+        raise HTTPException(status_code=404, detail="Результаты не найдены")
         
     return results
 
-@router.get("/{result_id}", response_model=ExamResultOut, summary="Получить конкретный результат по ID")
+@router.get("/{result_id}", response_model=schemas.ExamResultOut, summary="Получить конкретный результат по ID")
 def get_result_by_id(result_id: int, db: Session = Depends(get_db)):
-    result = db.query(ExamResult).filter(ExamResult.id_result == result_id).first()
-    
+    result = db.query(models.ExamResult).filter(models.ExamResult.id_result == result_id).first()
     if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Результат с ID {result_id} не найден"
-        )
+        raise HTTPException(status_code=404, detail="Результат не найден")
     return result
 
-@router.post("/start", response_model=ExamStartResponse, status_code=status.HTTP_201_CREATED, summary="Инициализировать начало экзамена")
-def start_exam(data: ExamResultCreate, db: Session = Depends(get_db)):
-    # Проверяем существование студента
-    student = db.query(Student).filter(Student.id_student == data.id_student).first()
-    if not student:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Студент с ID {data.id_student} не найден"
-        )
+@router.post("/start", response_model=schemas.ExamStartResponse, status_code=status.HTTP_201_CREATED, summary="Начать экзамен")
+def start_exam(data: schemas.ExamResultCreate, db: Session = Depends(get_db)):
+    if not db.query(Student).filter(Student.id_student == data.id_student).first():
+        raise HTTPException(status_code=404, detail="Студент не найден")
 
-    # Проверяем существование теста
-    test = db.query(Test).filter(Test.id_test == data.id_test).first()
-    if not test:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Тест с ID {data.id_test} не найден"
-        )
+    if not db.query(Test).filter(Test.id_test == data.id_test).first():
+        raise HTTPException(status_code=404, detail="Тест не найден")
 
-    new_result = ExamResult(
+    new_result = models.ExamResult(
         id_student=data.id_student,
         id_test=data.id_test,
         date=datetime.now(),
@@ -174,23 +134,16 @@ def start_exam(data: ExamResultCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_result)
         return new_result
-        
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Ошибка при инициализации результата экзамена"
-        )
+        raise HTTPException(status_code=500, detail="Ошибка при инициализации экзамена")
     
-@router.put("/{id_result}/final-grade", response_model=ExamResultOut, summary="Установить финальную оценку")
-def set_final_grade(id_result: int, data: FinalGradePut, db: Session = Depends(get_db)):
-    result = db.query(ExamResult).filter(ExamResult.id_result == id_result).first()
+@router.put("/{id_result}/final-grade", response_model=schemas.ExamResultOut, summary="Установить финальную оценку")
+def set_final_grade(id_result: int, data: schemas.FinalGradePut, db: Session = Depends(get_db)):
+    result = db.query(models.ExamResult).filter(models.ExamResult.id_result == id_result).first()
     
     if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Результат не найден"
-        )
+        raise HTTPException(status_code=404, detail="Результат не найден")
 
     result.final_grade = data.final_grade
     
@@ -200,7 +153,4 @@ def set_final_grade(id_result: int, data: FinalGradePut, db: Session = Depends(g
         return result
     except Exception:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Ошибка при сохранении данных"
-        )
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении данных")

@@ -2,11 +2,14 @@ import boto3
 import os
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
 from dotenv import load_dotenv
-from typing import List
-from modules.storage.schemas import AudioUploadResponse, AudioBase
-from modules.storage.models import Audio
-from database import get_db
 from sqlalchemy.orm import Session
+from typing import List
+
+
+from database import get_db
+
+from . import models, schemas
+
 from speech_to_text.speech_to_text_main.speach_to_text_new import run_stt_pipeline
 from speech_to_text.speech_to_text_main.config import MODEL_DIR
 
@@ -21,9 +24,8 @@ s3_client = boto3.client(
     endpoint_url=os.getenv("S3_ENDPOINT")
 )
 
-@router.post("/upload-audio", response_model=AudioUploadResponse, summary="Загрузить аудиофайл и получить URL для доступа", deprecated=True)
+@router.post("/upload-audio", response_model=schemas.AudioUploadResponse, summary="Загрузить аудиофайл и получить URL для доступа", deprecated=True)
 async def upload_audio(file: UploadFile = File(...)):
-    # Проверка, что это аудио
     if not file.content_type.startswith("audio/"):
         raise HTTPException(status_code=400, detail="Файл должен быть аудиозаписью")
 
@@ -46,16 +48,13 @@ async def upload_audio(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка загрузки: {str(e)}")
 
-@router.post("/process-audio", response_model=AudioUploadResponse, summary="Загрузить аудиофайл, расшифровать и сохранить в базу данных")
+@router.post("/process-audio", response_model=schemas.AudioUploadResponse, summary="Загрузить аудиофайл, расшифровать и сохранить в базу данных")
 async def process_audio(
     id_question: int = Form(...),
     id_result: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    print(f"\n[STEP 1] Начало обработки файла: {file.filename}")
-    print(f"Контекст: Question ID: {id_question}, Result ID: {id_result}")
-
     if not file.content_type.startswith("audio/"):
         raise HTTPException(status_code=400, detail="Файл должен быть аудиозаписью")
 
@@ -76,7 +75,7 @@ async def process_audio(
         file_url = f"https://{bucket}.{endpoint}/{filename}"
         transcript_text = run_stt_pipeline(audio_bytes, str(MODEL_DIR))
         
-        new_audio = Audio(
+        new_audio = models.Audio(
             id_question=id_question,
             id_result=id_result,
             filename=file_url,
@@ -98,17 +97,13 @@ async def process_audio(
         raise HTTPException(status_code=500, detail=f"Ошибка при обработке: {str(e)}")
 
 
-@router.get("/get-all-audios", response_model=List[AudioBase], summary="Получить список всех аудиозаписей")
+@router.get("/get-all-audios", response_model=List[schemas.AudioBase], summary="Получить список всех аудиозаписей")
 async def get_all_audios(db: Session = Depends(get_db)):
     try:
-        audios = db.query(Audio).all()
+        audios = db.query(models.Audio).all()
         if not audios:
-            print("[INFO] Таблица аудио пока пуста")
             return []
 
         return audios
     except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Не удалось получить список аудио: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Не удалось получить список аудио: {str(e)}")

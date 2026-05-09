@@ -22,3 +22,6 @@ class QuestionOut(QuestionBase):
 
     class Config:
         from_attributes = True
+        
+class QuestionImportSchema(QuestionBase):
+    id_question: Optional[int] = None
