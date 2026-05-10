@@ -48,10 +48,3 @@ app.include_router(tests_router)
 app.include_router(questions_router)
 app.include_router(results_router)
 app.include_router(storage_router)
-
-@app.get("/", tags=["Root"])
-async def root():
-    return {
-        "status": "online",
-        "message": "Welcome to Student assessment assistant API"
-    }

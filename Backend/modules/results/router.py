@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import List
 
 from database import get_db
-# from dependencies import scorer
+from dependencies import scorer
 
-from . import models, schemas
+from . import models, schemas, analytics
 
 from modules.students.models import Student
 from modules.questions.models import Question
@@ -24,21 +24,21 @@ def calculate_results(data: schemas.CalculateExamRequest, db: Session = Depends(
     if not result_entry:
         raise HTTPException(status_code=404, detail="Запись результата не найдена")
 
+    audio_records = db.query(Audio).filter(Audio.id_result == data.id_result).all()
+    if not audio_records:
+        raise HTTPException(status_code=404, detail="Для данного результата не найдено аудиозаписей")
+
     rows_for_scorer = []
-    
-    for audio_id in data.audio_ids:
-        audio_entry = db.query(Audio).filter(Audio.id_audio == audio_id).first()
-        
-        if not audio_entry:
-            raise HTTPException(status_code=404, detail=f"Аудио {audio_id} не найдено")
-            
+    for audio_entry in audio_records:
         question_data = audio_entry.question
-        
+        if not question_data:
+            continue
+            
         rows_for_scorer.append({
             "id_audio": audio_entry.id_audio,
-            "question": question_data.question_content,
-            "reference": question_data.standard_answer,
-            "student": audio_entry.transcript,
+            "question": question_data.question_content or "", 
+            "reference": question_data.standard_answer or "",
+            "student": audio_entry.transcript or "",
         })
 
     model_results = scorer.score_batch(rows_for_scorer)
@@ -47,13 +47,22 @@ def calculate_results(data: schemas.CalculateExamRequest, db: Session = Depends(
     total_grade = 0
     
     for i, res in enumerate(model_results):
+        audio_rec = audio_records[i] 
+        
         analysis_item = {
-            "id_audio": rows_for_scorer[i]["id_audio"],
+            "audio": {
+                "id_audio": audio_rec.id_audio,
+                "id_question": audio_rec.id_question,
+                "id_result": audio_rec.id_result,
+                "filename": audio_rec.filename,
+                "transcript": audio_rec.transcript,
+                "question_text": audio_rec.question.question_content # Текст берем из связи
+            },
             "similarity": res["S"],
             "term_coverage": res["C_raw"],
             "speech_coherence": res["H"],
             "question_rec_grade": res["grade"],
-            "comment": f"Сходство: {res['S']:.2f}. Анализ Rubert."
+            "comment": ""
         }
         final_analytics.append(analysis_item)
         total_grade += res["grade"]
@@ -74,25 +83,6 @@ def calculate_results(data: schemas.CalculateExamRequest, db: Session = Depends(
         "rec_grade": rec_grade,
         "analitics_data": final_analytics
     }
-
-@router.post("/", response_model=schemas.ExamResultOut, status_code=status.HTTP_201_CREATED, summary="Сохранить результат экзамена")
-def create_exam_result(result_data: schemas.ExamResultAll, db: Session = Depends(get_db)):
-    if not db.query(Student).filter(Student.id_student == result_data.id_student).first():
-        raise HTTPException(status_code=404, detail="Студент не найден")
-
-    if not db.query(Test).filter(Test.id_test == result_data.id_test).first():
-        raise HTTPException(status_code=404, detail="Тест не найден")
-
-    new_result = models.ExamResult(**result_data.model_dump())
-    
-    try:
-        db.add(new_result)
-        db.commit()
-        db.refresh(new_result)
-        return new_result
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Ошибка при сохранении результата")
 
 @router.get("/student/{student_id}", response_model=List[schemas.ExamResultOut], summary="Получить результаты студента")
 def get_student_results(student_id: int, db: Session = Depends(get_db)):
@@ -154,3 +144,22 @@ def set_final_grade(id_result: int, data: schemas.FinalGradePut, db: Session = D
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Ошибка при сохранении данных")
+    
+@router.get("/analytics/group/{group_id}/discipline/{discipline_id}", response_model=schemas.GroupAnalyticsOut)
+def get_group_analytics(group_id: int, discipline_id: int, db: Session = Depends(get_db)):
+    results = db.query(models.ExamResult).join(Student).join(Test).filter(
+        Student.id_group == group_id,
+        Test.id_discipline == discipline_id,
+        models.ExamResult.final_grade != None
+    ).all()
+
+    if not results:
+        raise HTTPException(status_code=404, detail="Данные для анализа не найдены")
+
+    stats = analytics.calculate_group_statistics(results)
+    
+    return {
+        "group_id": group_id,
+        "discipline_id": discipline_id,
+        **stats
+    }

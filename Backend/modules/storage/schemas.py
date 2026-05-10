@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class AudioBase(BaseModel):
+    id_audio: int
     id_question: int
     id_result: int
     filename: str
