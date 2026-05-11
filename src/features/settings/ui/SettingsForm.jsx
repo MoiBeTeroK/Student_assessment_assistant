@@ -134,10 +134,7 @@ export const SettingsForm = ({currentUser}) => {
                         textTransform: 'none',
                         px: 3,
                         py: 1,
-                        '&:hover': {
-                            backgroundColor: 'rgba(249,245,237,0.5)',
-                            borderColor: '#F9F5ED',
-                        },
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: '#F9F5ED' },
                     }}
                 >
                     Выйти из аккаунта

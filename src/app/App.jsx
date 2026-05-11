@@ -5,6 +5,7 @@ import { theme } from './theme';
 import { LoginPage } from '../pages/login';
 import { SettingsPage } from '../pages/settings';
 import { StudentsPage } from '../pages/students';
+import { QuestionsPage } from '../pages/questions';
 
 export const App = () => {
     return (
@@ -15,6 +16,7 @@ export const App = () => {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/students" element={<StudentsPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/questions" element={<QuestionsPage />} />
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </BrowserRouter>
