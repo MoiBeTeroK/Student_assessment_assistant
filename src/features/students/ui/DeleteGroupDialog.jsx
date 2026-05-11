@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 
-export const DeleteGroupDialog = ({ open, onConfirm, onCancel }) => {
+export const DeleteGroupDialog = ({ open, onConfirm, onCancel, message = 'Удалить группу?' }) => {
     if (!open) return null;
 
     return (
@@ -22,7 +22,7 @@ export const DeleteGroupDialog = ({ open, onConfirm, onCancel }) => {
                 maxHeight: '150px',
             }}>
                 <Box sx={{ fontFamily: '"Montserrat", sans-serif', fontSize: '1.4rem', color: '#2A2A2A' }}>
-                    Удалить группу?
+                    {message}
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
