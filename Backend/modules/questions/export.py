@@ -5,7 +5,6 @@ from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from fpdf import FPDF
 
-# --- КОНСТАНТЫ ---
 HEADER_TEXT = (
     "МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ\n"
     "ФГБОУ ВО «Кубанский государственный университет»\n"
@@ -14,7 +13,6 @@ HEADER_TEXT = (
 FONT_NAME_DOCX = 'Times New Roman'
 FONT_NAME_PDF = 'TimesNewRoman'
 
-# --- КЛАСС PDF ---
 class PDF(FPDF):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -25,14 +23,11 @@ class PDF(FPDF):
             self.add_font(FONT_NAME_PDF, '', font_path("TIMES.TTF"), uni=True)
             self.add_font(FONT_NAME_PDF, 'B', font_path("TIMESBD.TTF"), uni=True)
         except Exception as e:
-            # Если кириллица не поддерживается, FPDF упадет при печати
             print(f"Предупреждение: шрифты не загружены ({e})")
 
-# --- ВСПОМОГАТЕЛЬНАЯ ЛОГИКА ---
 def get_title(discipline_name):
     return f"Вопросы к экзамену по дисциплине\n«{discipline_name}»"
 
-# --- ГЕНЕРАЦИЯ DOCX ---
 def generate_docx(discipline_name: str, questions: list):
     doc = Document()
     
@@ -52,13 +47,13 @@ def generate_docx(discipline_name: str, questions: list):
         p.paragraph_format.line_spacing = 1.0
         return p
 
-    # 1. Шапка
+    # Шапка
     add_para(HEADER_TEXT, align=WD_ALIGN_PARAGRAPH.CENTER)
     
-    # 2. Заголовок
+    # Заголовок
     add_para(get_title(discipline_name), bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=10)
 
-    # 3. Список вопросов
+    # Список вопросов
     for i, q_text in enumerate(questions, 1):
         add_para(f"{i}. {q_text}", indent=1.25, space_after=2)
 
@@ -67,43 +62,35 @@ def generate_docx(discipline_name: str, questions: list):
     file_stream.seek(0)
     return file_stream
 
-# --- ГЕНЕРАЦИЯ PDF ---
-# --- ГЕНЕРАЦИЯ PDF ---
 def generate_pdf(discipline_name: str, questions: list):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Активируем жирный шрифт для шапки
-    pdf.set_font(FONT_NAME_PDF, 'B', 11) # Можно 11 для компактности
+    pdf.set_font(FONT_NAME_PDF, 'B', 11)
 
-    # 1. Шапка (h=4 вместо 5 сделает строки внутри шапки чуть ближе)
+    # Шапка
     pdf.multi_cell(0, 4, HEADER_TEXT, align="C")
     
-    # --- МИНИМАЛЬНЫЙ ОТСТУП ---
-    # Поставил 3мм. Если нужно ВПЛОТНУЮ, ставь 1 или 2.
     pdf.ln(3) 
     
-    # 2. Заголовок
-    # h=5 вместо 7 подтянет строки заголовка друг к другу
+    # Заголовок
     pdf.multi_cell(0, 5, get_title(discipline_name), align="C")
     
     # Небольшой отступ перед списком вопросов
     pdf.ln(2)
 
-    # 3. Вопросы
+    # Вопросы
     pdf.set_font(FONT_NAME_PDF, '', 12)
     indent_width = 12.5  # 1.25 см
     
     for i, q_text in enumerate(questions, 1):
-        # Используем l_margin для корректного позиционирования
         pdf.set_x(pdf.l_margin + indent_width) 
         pdf.multi_cell(0, 5, f"{i}. {q_text}")
         pdf.ln(1)
 
     # Генерация финального потока
     pdf_output = pdf.output()
-    # Обработка разных версий fpdf2 (bytes vs bytearray)
     if isinstance(pdf_output, str):
         pdf_output = pdf_output.encode('latin-1')
         
