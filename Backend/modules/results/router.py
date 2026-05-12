@@ -145,7 +145,7 @@ def set_final_grade(id_result: int, data: schemas.FinalGradePut, db: Session = D
         db.rollback()
         raise HTTPException(status_code=500, detail="Ошибка при сохранении данных")
     
-@router.get("/analytics/group/{group_id}/discipline/{discipline_id}", response_model=schemas.GroupAnalyticsOut)
+@router.get("/analytics/group/{group_id}/discipline/{discipline_id}", response_model=schemas.GroupAnalyticsOut, summary="Вывод аналитики")
 def get_group_analytics(group_id: int, discipline_id: int, db: Session = Depends(get_db)):
     results = db.query(models.ExamResult).join(Student).join(Test).filter(
         Student.id_group == group_id,

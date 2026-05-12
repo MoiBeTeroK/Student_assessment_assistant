@@ -210,7 +210,7 @@ async def preview_questions_from_file(id_discipline: int, file: UploadFile = Fil
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при обработке файла: {str(e)}")
     
-@router.get("/export/{id_discipline}", summary="Экспорт списка вопросов")
+@router.get("/export/{id_discipline}", summary="Экспорт списка вопросов в выбранном формате")
 def export_questions(
     id_discipline: int, 
     format: ExportFormat = Query(ExportFormat.docx, description="Формат файла (docx или pdf)"), 

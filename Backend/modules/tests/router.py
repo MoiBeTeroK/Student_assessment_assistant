@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from typing import List
 from urllib.parse import quote
+from enum import Enum
 
 from database import get_db
 
@@ -185,9 +186,19 @@ def confirm_generated_tests(request: schemas.TestGenerateRequest, db: Session = 
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка сохранения: {str(e)}")
     
-@router.get("/export/docx/{discipline_id}", summary="Экспорт всех билетов дисциплины в DOCX")
-def export_tests_to_docx(discipline_id: int, db: Session = Depends(get_db)):
+
+class ExportFormat(str, Enum):
+    docx = "docx"
+    pdf = "pdf"
+
+@router.get("/export/tests/{discipline_id}", summary="Экспорт билетов в выбранном формате")
+def export_tests_combined(
+    discipline_id: int, 
+    format: ExportFormat = Query(ExportFormat.docx, description="Формат файла (docx или pdf)"),
+    db: Session = Depends(get_db)
+):
     discipline = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
+    
     if not discipline:
         raise HTTPException(status_code=404, detail="Дисциплина не найдена")
 
@@ -198,33 +209,32 @@ def export_tests_to_docx(discipline_id: int, db: Session = Depends(get_db)):
     if not tests:
         raise HTTPException(status_code=404, detail="Билеты не найдены")
 
-    file_stream = exporter.generate_tests_docx(discipline.name_discipline, tests)
-    filename = quote(f"Билеты_{discipline.name_discipline}.docx")
+    export_config = {
+        ExportFormat.docx: {
+            "generator": exporter.generate_tests_docx,
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "extension": "docx"
+        },
+        ExportFormat.pdf: {
+            "generator": exporter.generate_tests_pdf,
+            "media_type": "application/pdf",
+            "extension": "pdf"
+        }
+    }
+
+    current_settings = export_config[format]
     
-    return StreamingResponse(
-        file_stream,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+    file_stream = current_settings["generator"](
+        discipline.name_discipline, 
+        tests
     )
-
-@router.get("/export/pdf/{discipline_id}", summary="Экспорт всех билетов дисциплины в PDF")
-def export_tests_to_pdf(discipline_id: int, db: Session = Depends(get_db)):
-    discipline = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
-    if not discipline:
-        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
-
-    tests = db.query(models.Test).options(joinedload(models.Test.questions))\
-        .filter(models.Test.id_discipline == discipline_id)\
-        .order_by(models.Test.test_number).all()
-
-    if not tests:
-        raise HTTPException(status_code=404, detail="Билеты не найдены")
-
-    file_stream = exporter.generate_tests_pdf(discipline.name_discipline, tests)
-    filename = quote(f"Билеты_{discipline.name_discipline}.pdf")
+    safe_discipline_name = discipline.name_discipline.replace(' ', '_')
+    filename_encoded = quote(f"Билеты_{safe_discipline_name}.{current_settings['extension']}")
     
     return StreamingResponse(
         file_stream,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+        media_type=current_settings["media_type"],
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"
+        }
     )
