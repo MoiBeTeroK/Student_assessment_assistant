@@ -9,6 +9,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./Backend
@@ -22,10 +27,51 @@ services:
       - "8000:8000"
     volumes:
       - ./Backend:/app
-      - ./Backend/speech_to_text/model:/app/speech_to_text/model
-      - ./Backend/speech_to_text/silero_vad:/app/speech_to_text/silero_vad
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      django_migrations:
+        condition: service_completed_successfully
+
+  django_migrations:
+    build: ./admin_panel
+    container_name: django_migration_runner
+    env_file:
+      - ./Backend/.env
+    volumes:
+      - ./admin_panel:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python manage.py migrate
+
+  alembic_migrations:
+    build: ./Backend
+    container_name: alembic_migration_runner
+    env_file:
+      - ./Backend/.env
+    volumes:
+      - ./Backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: alembic upgrade head
+
+  admin:
+    build: ./admin_panel
+    container_name: main_admin
+    restart: always
+    env_file:
+      - ./Backend/.env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./admin_panel:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      django_migrations:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:

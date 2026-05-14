@@ -69,13 +69,30 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+def include_object(object, name, type_, reflected, compare_to):
     """
+    Фильтр: Alembic будет игнорировать все таблицы,
+    которые создаются и управляются через Django.
+    """
+    ignored_tables = [
+        "auth_user",
+        "user_profile",
+        "auth_group",
+        "auth_permission",
+        "auth_group_permissions",
+        "auth_user_groups",
+        "auth_user_user_permissions",
+        "django_admin_log",
+        "django_content_type",
+        "django_migrations",
+        "django_session"
+    ]
+
+    if type_ == "table" and name in ignored_tables:
+        return False
+    return True
+
+def run_migrations_online() -> None:
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -84,7 +101,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=include_object
         )
 
         with context.begin_transaction():

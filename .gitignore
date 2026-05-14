@@ -1,0 +1,9 @@
+node_modules/
+venv/
+__pycache__/
+*.pyc
+admin_panel/db.sqlite3
+.env
+*.log
+dist/
+build/
