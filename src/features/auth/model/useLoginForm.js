@@ -27,7 +27,7 @@ export const useLoginForm = () => {
                 setError('Неверный логин или пароль');
                 return;
             }
-            navigate('/settings');
+            navigate('/exam');
 
             console.log('Login:', { login, password });
         } catch {
