@@ -7,6 +7,7 @@ import { SettingsPage } from '../pages/settings';
 import { StudentsPage } from '../pages/students';
 import { QuestionsPage } from '../pages/questions';
 import { TicketsPage } from '../pages/tickets';
+import { ExamPage } from '../pages/exam';
 
 export const App = () => {
     return (
@@ -19,6 +20,7 @@ export const App = () => {
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/questions" element={<QuestionsPage />} />
                     <Route path="/tickets" element={<TicketsPage />} />
+                    <Route path="/exam" element={<ExamPage />} />
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </BrowserRouter>
