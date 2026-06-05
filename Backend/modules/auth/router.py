@@ -50,6 +50,9 @@ async def refresh(request: Request, response: Response):
 
 
 @router.post("/logout/", summary="Выход из системы")
-async def logout(response: Response):
+async def logout(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        await service.logout(refresh_token)
     response.delete_cookie(key="refresh_token", path="/api/auth/refresh/")
     return {"detail": "Выход выполнен"}

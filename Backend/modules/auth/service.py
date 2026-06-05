@@ -65,6 +65,18 @@ async def refresh_token(refresh: str) -> dict:
     return response.json()
 
 
+async def logout(refresh: str) -> None:
+    async with httpx.AsyncClient() as client:
+        try:
+            await client.post(
+                f"{ADMIN_PANEL_URL}/api/auth/logout/",
+                json={"refresh": refresh},
+                timeout=10.0,
+            )
+        except httpx.RequestError:
+            pass  # Блэклист best-effort: cookie всё равно очистим
+
+
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])

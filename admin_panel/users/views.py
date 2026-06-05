@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import UserSerializer, CreateUserSerializer, UpdateUserSerializer
@@ -35,6 +36,20 @@ class LoginView(APIView):
             'refresh': str(refresh),
             'user': UserSerializer(user, context={'request': request}).data,
         })
+
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh = request.data.get('refresh')
+        if not refresh:
+            return Response({'detail': 'Refresh-токен не передан'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            RefreshToken(refresh).blacklist()
+        except TokenError:
+            pass  # Токен уже истёк или недействителен — всё равно считаем выход успешным
+        return Response({'detail': 'Выход выполнен'})
 
 
 class UserListView(APIView):
