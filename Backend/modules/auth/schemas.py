@@ -6,10 +6,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class RefreshRequest(BaseModel):
-    refresh: str
-
-
 class UserInfo(BaseModel):
     id: int
     username: str
@@ -22,9 +18,8 @@ class UserInfo(BaseModel):
     passphrase: str | None
 
 
-class TokenResponse(BaseModel):
+class LoginResponse(BaseModel):
     access: str
-    refresh: str
     user: UserInfo
 
 
