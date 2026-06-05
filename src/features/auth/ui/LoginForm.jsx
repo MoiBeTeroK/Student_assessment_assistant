@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import { useLoginForm } from '../model/useLoginForm';
 
 export const LoginForm = () => {
-    const { login, setLogin, password, setPassword, loading, error, handleSubmit } = useLoginForm();
+    const { username, setUsername, password, setPassword, loading, error, handleSubmit } = useLoginForm();
 
     return (
         <Box
@@ -46,8 +46,8 @@ export const LoginForm = () => {
                     id="login-input"
                     fullWidth
                     variant="outlined"
-                    value={login}
-                    onChange={(e) => setLogin(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
                     InputLabelProps={{ shrink: false }}
                     label=""

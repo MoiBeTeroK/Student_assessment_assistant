@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { storage } from '../../../shared/lib/storage';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../app/AuthContext';
 
 const INITIAL_DISCIPLINES = [
     { id: 1, name: 'Компьютерные сети', active: true },
@@ -17,6 +17,7 @@ export const useSettings = (correntUser) => {
     const [autoCount, setAutoCount] = useState('');
     const [disciplines, setDisciplines] = useState(INITIAL_DISCIPLINES);
     const navigate = useNavigate();
+    const { logout: authLogout } = useAuth();
 
     // useEffect(() => {
     //     const saved = storage.get(storageKey);
@@ -73,7 +74,8 @@ export const useSettings = (correntUser) => {
         setDisciplines((prev) => prev.filter((d) => d.id !== id));
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await authLogout();
         navigate('/login');
     };
 

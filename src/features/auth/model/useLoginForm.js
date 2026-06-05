@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-const HARDCODED_LOGIN = 'admin'
-const HARDCODED_PASSWORD = '123456'
+import { useAuth } from '../../../app/AuthContext';
 
 export const useLoginForm = () => {
     const navigate = useNavigate();
-    const [login, setLogin] = useState('');
+    const { login } = useAuth();
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -14,36 +14,21 @@ export const useLoginForm = () => {
         e.preventDefault();
         setError('');
 
-        if (!login.trim() || !password.trim()) {
+        if (!username.trim() || !password.trim()) {
             setError('Заполните все поля');
             return;
         }
 
         setLoading(true);
         try {
-
-            await new Promise((r) => setTimeout(r, 800));
-            if (login !== HARDCODED_LOGIN || password !== HARDCODED_PASSWORD) {
-                setError('Неверный логин или пароль');
-                return;
-            }
+            await login(username, password);
             navigate('/exam');
-
-            console.log('Login:', { login, password });
-        } catch {
-            setError('Неверный логин или пароль');
+        } catch (err) {
+            setError(err.message || 'Неверный логин или пароль');
         } finally {
             setLoading(false);
         }
     };
 
-    return {
-        login,
-        setLogin,
-        password,
-        setPassword,
-        loading,
-        error,
-        handleSubmit,
-    };
+    return { username, setUsername, password, setPassword, loading, error, handleSubmit };
 };
