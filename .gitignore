@@ -6,6 +6,7 @@ admin_panel/db.sqlite3
 .env
 dist/
 build/
+.vite/*
 
 # Logs
 logs

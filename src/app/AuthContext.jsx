@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { authApi } from '../shared/api/authApi';
+import { tokenStore } from '../shared/api/tokenStore';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +9,27 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [initializing, setInitializing] = useState(true);
 
-    // При загрузке страницы пробуем восстановить сессию через refresh-cookie
+    // Синхронизируем токен в модульное хранилище при каждом изменении
+    useEffect(() => {
+        tokenStore.set(accessToken);
+    }, [accessToken]);
+
+    // Регистрируем функцию обновления токена для apiFetch
+    useEffect(() => {
+        tokenStore.setRefreshFn(async () => {
+            try {
+                const { access } = await authApi.refresh();
+                setAccessToken(access);
+                return access;
+            } catch {
+                setAccessToken(null);
+                setUser(null);
+                return null;
+            }
+        });
+    }, []);
+
+    // При загрузке страницы восстанавливаем сессию через refresh-cookie
     useEffect(() => {
         authApi.refresh()
             .then(({ access }) => setAccessToken(access))

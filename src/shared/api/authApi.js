@@ -1,3 +1,5 @@
+import { tokenStore } from './tokenStore';
+
 const request = async (url, options = {}) => {
     const res = await fetch(url, { credentials: 'include', ...options });
     if (!res.ok) {
@@ -20,4 +22,28 @@ export const authApi = {
 
     logout: () =>
         fetch('/api/auth/logout/', { method: 'POST', credentials: 'include' }),
+};
+
+// Fetch-обёртка с автоматическим обновлением токена при 401
+export const apiFetch = async (url, options = {}) => {
+    const doRequest = (token) =>
+        fetch(url, {
+            credentials: 'include',
+            ...options,
+            headers: {
+                ...options.headers,
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+
+    let res = await doRequest(tokenStore.get());
+
+    if (res.status === 401) {
+        const newToken = await tokenStore.refresh();
+        if (newToken) {
+            res = await doRequest(newToken);
+        }
+    }
+
+    return res;
 };
