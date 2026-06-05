@@ -18,6 +18,8 @@ gunicorn
 psycopg2-binary
 python-multipart
 pydantic-settings
+httpx
+python-jose[cryptography]
 
 # Для аудио
 torchaudio==2.2.0

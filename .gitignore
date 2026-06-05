@@ -7,3 +7,4 @@ admin_panel/db.sqlite3
 *.log
 dist/
 build/
+.idea

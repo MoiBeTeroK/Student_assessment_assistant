@@ -4,7 +4,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-here'
+SECRET_KEY = os.getenv('JWT_SECRET_KEY', '507082134ea6ea4f7ac278c93a21b1e650d639a463ff4b0c7635c5b23f717804')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 

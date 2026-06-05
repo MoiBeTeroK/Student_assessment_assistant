@@ -32,6 +32,8 @@ services:
         condition: service_healthy
       django_migrations:
         condition: service_completed_successfully
+      admin:
+        condition: service_started
 
   django_migrations:
     build: ./admin_panel

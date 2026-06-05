@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from modules.auth.router import router as auth_router
 from modules.disciplines.router import router as disciplines_router
 from modules.students.router import router as students_router
 from modules.groups.router import router as groups_router
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 # Подключаем роутеры
+app.include_router(auth_router)
 app.include_router(disciplines_router)
 app.include_router(students_router)
 app.include_router(groups_router)
