@@ -54,7 +54,7 @@ export const AutoGenerateModal = ({ open, onClose, value, onChange, onSave }) =>
                             const v = e.target.value;
                             if (v === '' || parseInt(v) > 0) onChange(v);
                         }}
-                        sx={{ ...inputSx, width: 120}}
+                        sx={{ ...inputSx, width: 120 }}
                     />
                 </Box>
 

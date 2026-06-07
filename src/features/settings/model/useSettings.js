@@ -1,77 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../app/AuthContext';
+import { storage } from '../../../shared/lib/storage';
+import { disciplinesApi } from '../../../shared/api/disciplinesApi';
 
-const INITIAL_DISCIPLINES = [
-    { id: 1, name: 'Компьютерные сети', active: true },
-    { id: 2, name: 'Распределенные задачи и алгоритмы', active: false },
-    { id: 3, name: 'Компьютерные сети', active: false },
-    { id: 4, name: 'Компьютерные сети', active: false },
-    { id: 5, name: 'Компьютерные сети', active: false },
-    { id: 6, name: 'Компьютерные сети', active: false },
-];
+export const useSettings = (currentUser) => {
+    const storageKey = `settings_${currentUser}`;
+    const saved = storage.get(storageKey);
 
-export const useSettings = (correntUser) => {
-    // const storageKey = `settings_${currentUser}`;
-    const [manualCount, setManualCount] = useState('');
-    const [autoCount, setAutoCount] = useState('');
-    const [disciplines, setDisciplines] = useState(INITIAL_DISCIPLINES);
+    const [manualCount, setManualCount] = useState(saved?.manualCount ?? '');
+    const [autoCount, setAutoCount] = useState(saved?.autoCount ?? '');
+    const [disciplines, setDisciplines] = useState([]);
+    const [activeDisciplineId, setActiveDisciplineId] = useState(saved?.activeDisciplineId ?? null);
+
     const navigate = useNavigate();
     const { logout: authLogout } = useAuth();
 
-    // useEffect(() => {
-    //     const saved = storage.get(storageKey);
-    //     if (saved) {
-    //         setManualCount(saved.manualCount ?? '');
-    //         setAutoCount(saved.autoCount ?? '');
-    //         if (saved.disciplines) setDisciplines(saved.disciplines);
-    //     }
-    // }, [storageKey]);
+    useEffect(() => {
+        disciplinesApi.getAll()
+            .then((data) => setDisciplines(data))
+            .catch(() => {});
+    }, []);
 
-    // useEffect(() => {
-    //     storage.set(storageKey, { manualCount, autoCount, disciplines });
-    // }, [manualCount, autoCount, storageKey, disciplines]);
+    useEffect(() => {
+        storage.set(storageKey, { manualCount, autoCount, activeDisciplineId });
+    }, [manualCount, autoCount, activeDisciplineId, storageKey]);
 
     const toggleActive = (id) => {
-        setDisciplines((prev) =>
-            prev.map((d) => ({ ...d, active: d.id === id ? !d.active : false }))
-        );
+        setActiveDisciplineId((prev) => (prev === id ? null : id));
     };
 
     const handleManualCount = (e) => {
         const val = e.target.value;
-        if (val === '' || parseInt(val) > 0) {
-            setManualCount(val);
-        }
+        if (val === '' || parseInt(val) > 0) setManualCount(val);
     };
 
     const handleAutoCount = (e) => {
         const val = e.target.value;
-        if (val === '' || parseInt(val) > 0) {
-            setAutoCount(val);
+        if (val === '' || parseInt(val) > 0) setAutoCount(val);
+    };
+
+    const addDiscipline = async () => {
+        const name = prompt('Название дисциплины:');
+        if (!name?.trim()) return;
+        try {
+            const created = await disciplinesApi.create(name.trim());
+            setDisciplines((prev) => [...prev, created]);
+        } catch (e) {
+            alert(e.message);
         }
     };
 
-    const addDiscipline = () => {
-        const name = prompt('Название дисциплины:');
-        if (!name?.trim()) return;
-        setDisciplines((prev) => [
-            ...prev,
-            { id: Date.now(), name: name.trim(), active: false },
-        ]);
+    const editDiscipline = async (id) => {
+        try {
+            const current = await disciplinesApi.getById(id);
+            const name = prompt('Новое название:', current.name_discipline);
+            if (!name?.trim()) return;
+            const updated = await disciplinesApi.update(id, name.trim());
+            setDisciplines((prev) => prev.map((d) => (d.id_discipline === id ? updated : d)));
+        } catch (e) {
+            alert(e.message);
+        }
     };
 
-    const editDiscipline = (id) => {
-        const discipline = disciplines.find((d) => d.id === id);
-        const name = prompt('Новое название:', discipline.name);
-        if (!name?.trim()) return;
-        setDisciplines((prev) =>
-            prev.map((d) => (d.id === id ? { ...d, name: name.trim() } : d))
-        );
-    };
-
-    const deleteDiscipline = (id) => {
-        setDisciplines((prev) => prev.filter((d) => d.id !== id));
+    const deleteDiscipline = async (id) => {
+        try {
+            await disciplinesApi.delete(id);
+            setDisciplines((prev) => prev.filter((d) => d.id_discipline !== id));
+            if (activeDisciplineId === id) setActiveDisciplineId(null);
+        } catch (e) {
+            alert(e.message);
+        }
     };
 
     const logout = async () => {
@@ -79,16 +78,16 @@ export const useSettings = (correntUser) => {
         navigate('/login');
     };
 
+    const disciplinesWithActive = disciplines.map((d) => ({
+        ...d,
+        active: d.id_discipline === activeDisciplineId,
+    }));
+
     return {
-        manualCount, setManualCount,
-        handleManualCount,
-        autoCount, setAutoCount,
-        handleAutoCount,
-        disciplines,
-        addDiscipline,
-        editDiscipline,
-        deleteDiscipline,
-        logout,
-        toggleActive,
+        manualCount, setManualCount, handleManualCount,
+        autoCount, setAutoCount, handleAutoCount,
+        disciplines: disciplinesWithActive,
+        addDiscipline, editDiscipline, deleteDiscipline,
+        logout, toggleActive,
     };
 };

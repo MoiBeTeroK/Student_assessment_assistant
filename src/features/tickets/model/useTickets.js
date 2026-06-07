@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { storage } from '../../../shared/lib/storage';
+import { apiFetch } from '../../../shared/api/authApi';
 
 const STORAGE_KEY = 'tickets_data';
 const loadData = () => storage.get(STORAGE_KEY) ?? { tickets: [] };
@@ -43,15 +44,30 @@ export const useTickets = () => {
     };
 
     const handleAutoGenerate = async () => {
-        const questionsPerTicket = storage.get('settings_admin')?.autoCount ?? 3;
+        const settings = storage.get('settings_admin');
+        const disciplineId = settings?.activeDisciplineId;
+        const questionsPerTest = parseInt(settings?.autoCount) || 3;
         try {
-            await new Promise((r) => setTimeout(r, 800));
-            const generated = Array.from({ length: Number(autoCount) }, (_, i) => ({
-                id: Date.now() + i,
-                name: `Билет №${tickets.length + i + 1}`,
-                questionIds: [],
+            const res = await apiFetch('/api/tests/generate-confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_discipline: disciplineId,
+                    num_tests: parseInt(autoCount),
+                    questions_per_test: questionsPerTest,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Ошибка генерации');
+            }
+            const generated = await res.json();
+            const newTickets = generated.map((t) => ({
+                id: t.id_test,
+                name: `Билет №${t.test_number}`,
+                questionIds: t.questions.map((q) => q.id_question),
             }));
-            persist([...tickets, ...generated]);
+            persist([...tickets, ...newTickets]);
             setAutoMode(true);
         } catch (e) {
             console.error(e);

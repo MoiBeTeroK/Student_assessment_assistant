@@ -109,7 +109,7 @@ export const SettingsForm = ({currentUser}) => {
 
                     {disciplines.map((d) => (
                         <DisciplineCard
-                            key={d.id}
+                            key={d.id_discipline}
                             discipline={d}
                             onEdit={editDiscipline}
                             onDelete={deleteDiscipline}

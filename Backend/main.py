@@ -43,10 +43,10 @@ app.add_middleware(
 
 # Подключаем роутеры
 app.include_router(auth_router)
-app.include_router(disciplines_router)
-app.include_router(students_router)
-app.include_router(groups_router)
-app.include_router(tests_router)
-app.include_router(questions_router)
-app.include_router(results_router)
+app.include_router(disciplines_router, prefix="/api")
+app.include_router(students_router, prefix="/api")
+app.include_router(groups_router, prefix="/api")
+app.include_router(tests_router, prefix="/api")
+app.include_router(questions_router, prefix="/api")
+app.include_router(results_router, prefix="/api")
 # app.include_router(storage_router)

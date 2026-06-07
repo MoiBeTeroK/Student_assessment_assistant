@@ -20,7 +20,7 @@ export const DisciplineCard = ({ discipline, onEdit, onDelete, onToggleActive })
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box
-                    onClick={() => onToggleActive(discipline.id)}
+                    onClick={() => onToggleActive(discipline.id_discipline)}
                     sx={{
                         width: 22,
                         height: 22,
@@ -39,10 +39,10 @@ export const DisciplineCard = ({ discipline, onEdit, onDelete, onToggleActive })
                     )}
                 </Box>
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton size="small" onClick={() => onEdit(discipline.id)} sx={{ p: 0.3 }}>
+                    <IconButton size="small" onClick={() => onEdit(discipline.id_discipline)} sx={{ p: 0.3 }}>
                         <EditIcon sx={{ fontSize: 20, color: '#2A2A2A' }} />
                     </IconButton>
-                    <IconButton size="small" onClick={() => onDelete(discipline.id)} sx={{ p: 0.3 }}>
+                    <IconButton size="small" onClick={() => onDelete(discipline.id_discipline)} sx={{ p: 0.3 }}>
                         <DeleteIcon sx={{ fontSize: 20, color: '#2A2A2A' }} />
                     </IconButton>
                 </Box>
@@ -61,7 +61,7 @@ export const DisciplineCard = ({ discipline, onEdit, onDelete, onToggleActive })
                     WebkitBoxOrient: 'vertical',
                 }}
             >
-                {discipline.name}
+                {discipline.name_discipline}
             </Box>
         </Box>
     );
