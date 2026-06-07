@@ -1,0 +1,65 @@
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from typing import List
+
+from . import models, schemas
+
+
+def create_discipline(db: Session, discipline: schemas.DisciplineCreate, owner_id: int) -> models.Discipline:
+    clean_name = discipline.name_discipline.strip()
+    existing = db.query(models.Discipline).filter(
+        func.lower(models.Discipline.name_discipline) == func.lower(clean_name),
+        models.Discipline.owner_id == owner_id,
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Дисциплина с названием '{clean_name}' уже существует"
+        )
+    db_discipline = models.Discipline(name_discipline=clean_name, owner_id=owner_id)
+    db.add(db_discipline)
+    db.commit()
+    db.refresh(db_discipline)
+    return db_discipline
+
+
+def get_all_disciplines(db: Session, owner_id: int) -> List[models.Discipline]:
+    return db.query(models.Discipline).filter(models.Discipline.owner_id == owner_id).all()
+
+
+def get_discipline_by_id(db: Session, discipline_id: int, owner_id: int) -> models.Discipline:
+    db_discipline = db.query(models.Discipline).filter(
+        models.Discipline.id_discipline == discipline_id,
+        models.Discipline.owner_id == owner_id,
+    ).first()
+    if not db_discipline:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Дисциплина не найдена")
+    return db_discipline
+
+
+def update_discipline(db: Session, discipline_id: int, discipline: schemas.DisciplineCreate, owner_id: int) -> models.Discipline:
+    db_discipline = get_discipline_by_id(db, discipline_id, owner_id)
+
+    duplicate = db.query(models.Discipline).filter(
+        func.lower(models.Discipline.name_discipline) == func.lower(discipline.name_discipline),
+        models.Discipline.owner_id == owner_id,
+        models.Discipline.id_discipline != discipline_id,
+    ).first()
+    if duplicate:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Другая дисциплина уже использует это название"
+        )
+
+    db_discipline.name_discipline = discipline.name_discipline
+    db.commit()
+    db.refresh(db_discipline)
+    return db_discipline
+
+
+def delete_discipline(db: Session, discipline_id: int, owner_id: int) -> dict:
+    db_discipline = get_discipline_by_id(db, discipline_id, owner_id)
+    db.delete(db_discipline)
+    db.commit()
+    return {"status": "success", "message": "Discipline deleted"}
