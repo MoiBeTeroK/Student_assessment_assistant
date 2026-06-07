@@ -38,7 +38,7 @@ export const StudentsPage = () => {
                         />
                         {groups.map((g) => (
                             <GroupCard
-                                key={g.id}
+                                key={g.id_group}
                                 group={g}
                                 onSelect={setSelectedGroup}
                                 onEdit={startEditGroup}
@@ -53,7 +53,7 @@ export const StudentsPage = () => {
                                 onClick={() => setSelectedGroup(null)}
                                 sx={{ ...textSx, fontSize: '1.4rem', cursor: 'pointer', userSelect: 'none' }}
                             >
-                                ← {selectedGroup.name}
+                                ← {selectedGroup.group_name}
                             </Box>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 <Tooltip
@@ -82,7 +82,7 @@ export const StudentsPage = () => {
                                 </Tooltip>
                                 <Button
                                     variant="outlined"
-                                    disabled={!addingStudent && newStudentName === ''}
+                                    disabled={!selectedGroup?.students?.some((s) => s.pending)}
                                     onClick={saveStudents}
                                     sx={{
                                         fontFamily: '"Montserrat", sans-serif',
@@ -135,12 +135,14 @@ export const StudentsPage = () => {
                                 >
                                     Загрузить из файла
                                 </Button>
-                                <input ref={fileInputRef} type="file" accept=".txt" hidden onChange={loadFromFile} />
+                                <input ref={fileInputRef} type="file" accept=".docx,.pdf" hidden onChange={loadFromFile} />
                             </Box>
                         </Box>
 
                         <Box sx={{ m: 0, display: 'flex', flexDirection: 'column' }}>
-                            {selectedGroup.students.map((s, i) => (
+                            {[...selectedGroup.students]
+                                .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                                .map((s, i) => (
                                 <StudentRow
                                     key={s.id}
                                     index={i + 1}
