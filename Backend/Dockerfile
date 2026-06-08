@@ -1,12 +1,4 @@
-# FROM python:3.11.15-slim
 FROM python:3.12-slim
-
-# ENV OMP_NUM_THREADS=1
-# ENV MKL_NUM_THREADS=1
-# ENV TORCH_NUM_THREADS=1
-# ENV OPENBLAS_NUM_THREADS=1
-# ENV VECLIB_MAXIMUM_THREADS=1
-# ENV NUMEXPR_NUM_THREADS=1
 
 # Настройка системных зависимостей для PostgreSQL и сборки пакетов
 RUN apt-get update && apt-get install -y \
