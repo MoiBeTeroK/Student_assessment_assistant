@@ -17,16 +17,20 @@ const inputSx = {
 };
 
 export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, title = 'Добавление вопроса' }) => {
-    const [name, setName] = useState(initialData?.name ?? '');
-    const [weight, setWeight] = useState(initialData?.weight ?? '');
-    const [referenceAnswer, setReferenceAnswer] = useState(initialData?.referenceAnswer ?? '');
+    const [questionContent, setQuestionContent] = useState(initialData?.question_content ?? '');
+    const [complexityScore, setComplexityScore] = useState(initialData?.complexity_score ?? '');
+    const [standardAnswer, setStandardAnswer] = useState(initialData?.standard_answer ?? '');
     const [loadingAnswer, setLoadingAnswer] = useState(false);
 
     if (!open) return null;
 
     const handleSave = () => {
-        if (!name.trim()) return;
-        onSave({ name: name.trim(), weight: weight || null, referenceAnswer: referenceAnswer.trim() });
+        if (!questionContent.trim()) return;
+        onSave({
+            question_content: questionContent.trim(),
+            complexity_score: complexityScore || null,
+            standard_answer: standardAnswer.trim() || null,
+        });
     };
 
     const generateAnswer = async () => {
@@ -34,9 +38,9 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
         try {
             // бэк
             await new Promise((r) => setTimeout(r, 1200));
-            setReferenceAnswer(`Эталонный ответ на вопрос: "${name}". Здесь будет ответ от бэкенда.`);
+            setStandardAnswer(`Эталонный ответ на вопрос: "${questionContent}". Здесь будет ответ от бэкенда.`);
         } catch {
-            setReferenceAnswer('Ошибка генерации ответа');
+            setStandardAnswer('Ошибка генерации ответа');
         } finally {
             setLoadingAnswer(false);
         }
@@ -76,8 +80,8 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                     <TextField
                         fullWidth
                         size="small"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={questionContent}
+                        onChange={(e) => setQuestionContent(e.target.value)}
                         sx={inputSx}
                     />
                 </Box>
@@ -90,10 +94,10 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                         fullWidth
                         size="small"
                         type="number"
-                        value={weight}
+                        value={complexityScore}
                         onChange={(e) => {
                             const v = e.target.value;
-                            if (v === '' || (parseFloat(v) >= 0 && parseFloat(v) <= 1)) setWeight(v);
+                            if (v === '' || (parseFloat(v) >= 0 && parseFloat(v) <= 1)) setComplexityScore(v);
                         }}
                         inputProps={{ step: 0.1, min: 0.1, max: 1 }}
                         sx={inputSx}
@@ -104,7 +108,7 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                     <Button
                         variant="outlined"
                         onClick={generateAnswer}
-                        disabled={loadingAnswer || !name.trim()}
+                        disabled={loadingAnswer || !questionContent.trim()}
                         sx={{
                             fontFamily: '"Montserrat", sans-serif',
                             textTransform: 'none',
@@ -122,14 +126,14 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                         }
                     </Button>
 
-                    {(referenceAnswer || loadingAnswer) && (
+                    {(standardAnswer || loadingAnswer) && (
                         <TextField
                             fullWidth
                             multiline
                             minRows={3}
                             maxRows={8}
-                            value={referenceAnswer}
-                            onChange={(e) => setReferenceAnswer(e.target.value)}
+                            value={standardAnswer}
+                            onChange={(e) => setStandardAnswer(e.target.value)}
                             placeholder="Эталонный ответ..."
                             sx={{
                                 ...inputSx,
@@ -142,7 +146,7 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                 <Button
                     variant="contained"
                     onClick={handleSave}
-                    disabled={!name.trim()}
+                    disabled={!questionContent.trim()}
                     sx={{
                         fontFamily: '"Montserrat", sans-serif',
                         textTransform: 'none',

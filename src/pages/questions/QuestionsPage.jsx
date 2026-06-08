@@ -19,61 +19,24 @@ const btnSx = {
 
 export const QuestionsPage = () => {
     const {
-        questions, pendingQuestions,
+        questions, pendingQuestions, setPendingQuestions, disciplineId,
         addModalOpen, setAddModalOpen,
         editModalOpen, setEditModalOpen,
         editingQuestion,
         addQuestion, openEdit, saveEdit, deleteQuestion,
         fileInputRef, loadFromFile,
         savePending, cancelPending,
+        exportQuestions, clearAllQuestions,
     } = useQuestions();
 
     const hasPending = pendingQuestions.length > 0;
-    const allQuestions = [...questions, ...pendingQuestions];
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/questions" />
 
             <Box sx={{ px: 4, py: 15 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        {!hasPending && (
-                            <>
-                                <Button variant="outlined" onClick={() => fileInputRef.current?.click()} sx={btnSx}>
-                                    Загрузить вопросы из файла
-                                </Button>
-                                <input ref={fileInputRef} type="file" accept=".txt" hidden onChange={loadFromFile} />
-                            </>
-                        )}
-                        <Button variant="outlined" onClick={() => setAddModalOpen(true)} sx={btnSx}>
-                            Добавить вопрос вручную
-                        </Button>
-                    </Box>
-
-                    {hasPending && (
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button variant="outlined" onClick={savePending} sx={btnSx}>
-                                Сохранить
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                onClick={cancelPending}
-                                sx={{ ...btnSx, backgroundColor: 'transparent', color: '#F9F5ED', borderColor: '#F9F5ED' }}
-                            >
-                                Отмена
-                            </Button>
-                        </Box>
-                    )}
-
-                    {hasPending && (
-                        <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem', minWidth: 160, textAlign: 'center' }}>
-                            Весовые коэффициенты
-                        </Box>
-                    )}
-                </Box>
-
-                {allQuestions.length === 0 && (
+                {!disciplineId ? (
                     <Box sx={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         height: '40vh',
@@ -82,31 +45,93 @@ export const QuestionsPage = () => {
                         fontSize: '1.2rem',
                         textAlign: 'center',
                     }}>
-                        На данный момент<br />вопросов нет
+                        Выберите активную дисциплину в настройках
                     </Box>
-                )}
+                ) : (
+                    <>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                {!hasPending && (
+                                    <>
+                                        <Button variant="outlined" onClick={() => fileInputRef.current?.click()} sx={btnSx}>
+                                            Загрузить вопросы из файла
+                                        </Button>
+                                        <input ref={fileInputRef} type="file" accept=".docx,.pdf,.txt" hidden onChange={loadFromFile} />
+                                    </>
+                                )}
+                                <Button variant="outlined" onClick={() => setAddModalOpen(true)} sx={btnSx}>
+                                    Добавить вопрос вручную
+                                </Button>
+                                {!hasPending && (
+                                    <Button variant="outlined" onClick={() => exportQuestions('docx')} sx={btnSx}>
+                                        Экспорт вопросов
+                                    </Button>
+                                )}
+                                {!hasPending && (
+                                    <Button variant="outlined" onClick={clearAllQuestions} sx={btnSx}>
+                                        Удалить все вопросы
+                                    </Button>
+                                )}
+                            </Box>
 
-                <Box>
-                    {questions.map((q, i) => (
-                        <QuestionRow
-                            key={q.id}
-                            index={i + 1}
-                            question={q}
-                            onEdit={openEdit}
-                            onDelete={deleteQuestion}
-                            weightColumn={hasPending}
-                        />
-                    ))}
-                    {pendingQuestions.map((q, i) => (
-                        <QuestionRow
-                            key={q.id}
-                            index={questions.length + i + 1}
-                            question={q}
-                            onDelete={(id) => cancelPending()}
-                            weightColumn={true}
-                        />
-                    ))}
-                </Box>
+                            {hasPending && (
+                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                    <Button variant="outlined" onClick={savePending} sx={btnSx}>
+                                        Сохранить
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={cancelPending}
+                                        sx={{ ...btnSx, backgroundColor: 'transparent', color: '#F9F5ED', borderColor: '#F9F5ED' }}
+                                    >
+                                        Отмена
+                                    </Button>
+                                </Box>
+                            )}
+
+                            {hasPending && (
+                                <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem', minWidth: 160, textAlign: 'center' }}>
+                                    Весовые коэффициенты
+                                </Box>
+                            )}
+                        </Box>
+
+                        {questions.length === 0 && !hasPending && (
+                            <Box sx={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                height: '40vh',
+                                fontFamily: '"Montserrat", sans-serif',
+                                color: '#F9F5ED',
+                                fontSize: '1.2rem',
+                                textAlign: 'center',
+                            }}>
+                                На данный момент<br />вопросов нет
+                            </Box>
+                        )}
+
+                        <Box>
+                            {questions.map((q, i) => (
+                                <QuestionRow
+                                    key={q.id_question}
+                                    index={i + 1}
+                                    question={q}
+                                    onEdit={openEdit}
+                                    onDelete={deleteQuestion}
+                                    weightColumn={hasPending}
+                                />
+                            ))}
+                            {pendingQuestions.map((q, i) => (
+                                <QuestionRow
+                                    key={q._tempId}
+                                    index={questions.length + i + 1}
+                                    question={q}
+                                    onDelete={() => setPendingQuestions((prev) => prev.filter((p) => p._tempId !== q._tempId))}
+                                    weightColumn={true}
+                                />
+                            ))}
+                        </Box>
+                    </>
+                )}
             </Box>
 
             <AddQuestionModal
@@ -117,7 +142,7 @@ export const QuestionsPage = () => {
             />
 
             <AddQuestionModal
-                key={editingQuestion?.id ?? 'edit'}
+                key={editingQuestion?.id_question ?? 'edit'}
                 open={editModalOpen}
                 onClose={() => setEditModalOpen(false)}
                 onSave={saveEdit}

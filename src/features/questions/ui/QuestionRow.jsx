@@ -21,7 +21,7 @@ export const QuestionRow = ({ index, question, onEdit, onDelete, weightColumn })
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem' }}>
-                        {index}.&nbsp;{question.name}
+                        {index}.&nbsp;{question.question_content}
                     </Box>
                     <Box sx={{ display: 'flex', gap: 0.5, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s ease' }}>
                         {onEdit && (
@@ -29,28 +29,28 @@ export const QuestionRow = ({ index, question, onEdit, onDelete, weightColumn })
                                 <EditIcon sx={{ fontSize: 18, color: '#F9F5ED' }} />
                             </IconButton>
                         )}
-                        <IconButton size="small" onClick={() => onDelete(question.id)} sx={{ p: 0.3 }}>
+                        <IconButton size="small" onClick={() => onDelete(question.id_question ?? question._tempId)} sx={{ p: 0.3 }}>
                             <DeleteIcon sx={{ fontSize: 18, color: '#F9F5ED' }} />
                         </IconButton>
                     </Box>
                 </Box>
 
-                {question.weight && !weightColumn && (
+                {question.complexity_score != null && !weightColumn && (
                     <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1rem', pl: 2 }}>
-                        Коэффициент: {question.weight}
+                        Коэффициент: {question.complexity_score}
                     </Box>
                 )}
 
-                {question.referenceAnswer && (
+                {question.standard_answer && (
                     <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1rem', pl: 2 }}>
-                        Эталонный ответ: {question.referenceAnswer}
+                        Эталонный ответ: {question.standard_answer}
                     </Box>
                 )}
             </Box>
 
             {weightColumn && (
                 <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1rem', textAlign: 'center', pt: 0.3 }}>
-                    {question.weight ?? '—'}
+                    {question.complexity_score ?? '—'}
                 </Box>
             )}
         </Box>
