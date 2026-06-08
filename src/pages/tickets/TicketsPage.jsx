@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import { Check as CheckIcon } from '@mui/icons-material';
 import { Navbar } from '../../shared/ui/Navbar';
 import { TicketCard, AddTicketCard } from '../../features/tickets/ui/TicketCard';
@@ -6,18 +7,30 @@ import { AutoGenerateModal } from '../../features/tickets/ui/AutoGenerateModal';
 import { QuestionSelectScreen } from '../../features/tickets/ui/QuestionSelectScreen';
 import { DeleteGroupDialog } from '../../features/students/ui/DeleteGroupDialog';
 import { useTickets } from '../../features/tickets/model/useTickets';
-import { storage } from '../../shared/lib/storage';
+
+const btnSx = {
+    fontFamily: '"Montserrat", sans-serif',
+    fontWeight: '400',
+    backgroundColor: '#F9F5ED',
+    borderColor: '#2A2A2A',
+    color: '#2A2A2A',
+    borderRadius: '20px',
+    textTransform: 'none',
+    fontSize: '1.2rem',
+    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: '#F9F5ED' },
+};
 
 export const TicketsPage = () => {
     const {
-        tickets, autoMode, handleAutoToggle,
-        autoModalOpen, setAutoModalOpen, autoCount, setAutoCount, handleAutoGenerate,
+        tickets, questions, disciplineId,
+        allQuestionsHaveScore,
+        autoMode, handleAutoToggle,
+        autoModalOpen, handleAutoModalClose, autoCount, setAutoCount, handleAutoGenerate,
         questionSelectOpen, editingTicket,
         selectedQuestionIds, toggleQuestion, saveTicket, cancelSelect, openCreate, openEdit,
-        deleteTarget, askDelete, cancelDelete, confirmDelete, getManualLimit, handleAutoModalClose
+        deleteTarget, askDelete, cancelDelete, confirmDelete,
+        getManualLimit, getEffectiveLimit, exportTickets,
     } = useTickets();
-
-    const questions = storage.get('questions_data')?.questions ?? [];
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
@@ -32,36 +45,66 @@ export const TicketsPage = () => {
                         onSave={saveTicket}
                         onCancel={cancelSelect}
                         editingTicket={editingTicket}
-                        limit={getManualLimit()}
+                        limit={getEffectiveLimit()}
                     />
                 ) : (
                     <>
-                        <Box
-                            onClick={handleAutoToggle}
-                            sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, cursor: 'pointer', width: 'fit-content' }}
-                        >
-                            <Box sx={{
-                                width: 26,
-                                height: 26,
-                                border: '1.5px solid #F9F5ED',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: autoMode ? '#F9F5ED' : 'transparent',
-                            }}>
-                                {autoMode && <CheckIcon sx={{ fontSize: 18, color: '#2A2A2A' }} />}
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3, flexWrap: 'wrap' }}>
+                            {/* Чекбокс автоматического добавления */}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <Box
+                                    onClick={handleAutoToggle}
+                                    sx={{
+                                        display: 'flex', alignItems: 'center', gap: 1.5,
+                                        cursor: allQuestionsHaveScore ? 'pointer' : 'not-allowed',
+                                        width: 'fit-content',
+                                        opacity: allQuestionsHaveScore ? 1 : 0.5,
+                                    }}
+                                >
+                                    <Box sx={{
+                                        width: 26, height: 26,
+                                        border: '1.5px solid #F9F5ED',
+                                        borderRadius: '6px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        backgroundColor: autoMode ? '#F9F5ED' : 'transparent',
+                                    }}>
+                                        {autoMode && <CheckIcon sx={{ fontSize: 18, color: '#2A2A2A' }} />}
+                                    </Box>
+                                    <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem' }}>
+                                        Автоматическое добавление
+                                    </Box>
+                                </Box>
+                                {!allQuestionsHaveScore && (
+                                    <Box sx={{
+                                        fontFamily: '"Montserrat", sans-serif',
+                                        color: 'rgba(249,245,237,0.7)',
+                                        fontSize: '0.85rem',
+                                        maxWidth: 380,
+                                    }}>
+                                        Автоматическое добавление недоступно, введены не все весовые коэффициенты вопросов
+                                    </Box>
+                                )}
                             </Box>
-                            <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem' }}>
-                                Автоматическое добавление
-                            </Box>
+
+                            {/* Кнопка экспорта */}
+                            <Button
+                                variant="outlined"
+                                onClick={() => exportTickets('docx')}
+                                disabled={!disciplineId || tickets.length === 0}
+                                sx={{
+                                    ...btnSx,
+                                    '&.Mui-disabled': { borderColor: 'rgba(249,245,237,0.3)', color: 'rgba(249,245,237,0.3)', backgroundColor: 'transparent' },
+                                }}
+                            >
+                                Экспорт билетов
+                            </Button>
                         </Box>
 
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             <AddTicketCard onClick={openCreate} />
-                            {tickets.map((t) => (
+                            {[...tickets].sort((a, b) => a.test_number - b.test_number).map((t) => (
                                 <TicketCard
-                                    key={t.id}
+                                    key={t.id_test}
                                     ticket={t}
                                     onEdit={openEdit}
                                     onDelete={askDelete}

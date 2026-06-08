@@ -30,12 +30,12 @@ export const TicketCard = ({ ticket, onEdit, onDelete }) => {
                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(ticket); }} sx={{ p: 0.3 }}>
                     <EditIcon sx={{ fontSize: 24, color: '#2A2A2A' }} />
                 </IconButton>
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(ticket.id); }} sx={{ p: 0.3 }}>
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(ticket.id_test); }} sx={{ p: 0.3 }}>
                     <DeleteIcon sx={{ fontSize: 24, color: '#2A2A2A' }} />
                 </IconButton>
             </Box>
             <Box sx={{ fontFamily: '"Montserrat", sans-serif', fontSize: '1.4rem', color: '#2A2A2A' , display: 'flex', justifyContent: 'center' }}>
-                {ticket.name}
+                Билет №{ticket.test_number}
             </Box>
         </Box>
     );

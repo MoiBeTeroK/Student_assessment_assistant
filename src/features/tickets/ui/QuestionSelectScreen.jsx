@@ -36,7 +36,7 @@ export const QuestionSelectScreen = ({ questions, selectedIds, onToggle, onSave,
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem' }}>
-                    {editingTicket ? editingTicket.name : 'Выбор вопросов для создания билета'}
+                    {editingTicket ? `Билет №${editingTicket.test_number}` : 'Выбор вопросов для создания билета'}
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button variant="outlined" onClick={onSave} sx={btnSx}>
@@ -65,12 +65,12 @@ export const QuestionSelectScreen = ({ questions, selectedIds, onToggle, onSave,
                     </Box>
                 )}
                 {questions.map((q) => {
-                    const checked = selectedIds.includes(q.id);
+                    const checked = selectedIds.includes(q.id_question);
                     const disabled = !checked && limitReached;
                     return (
                         <Box
-                            key={q.id}
-                            onClick={() => !disabled && onToggle(q.id)}
+                            key={q.id_question}
+                            onClick={() => !disabled && onToggle(q.id_question)}
                             sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: disabled ? 'not-allowed' : 'pointer' }}
                         >
                             <Box sx={checkboxSx(checked, disabled)}>
@@ -81,7 +81,7 @@ export const QuestionSelectScreen = ({ questions, selectedIds, onToggle, onSave,
                                 color: disabled ? 'rgba(249,245,237,0.4)' : '#F9F5ED',
                                 fontSize: '1.2rem',
                             }}>
-                                {q.name}
+                                {q.question_content}
                             </Box>
                         </Box>
                     );
