@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 from datetime import datetime
 from typing import List
 
@@ -7,7 +8,6 @@ from dependencies import scorer
 from . import models, schemas, analytics
 
 from modules.students.models import Student
-from modules.questions.models import Question
 from modules.tests.models import Test
 from modules.storage.models import Audio
 
@@ -35,35 +35,28 @@ def calculate_results(db: Session, data: schemas.CalculateExamRequest) -> dict:
 
     model_results = scorer.score_batch(rows_for_scorer)
     
-    final_analytics = []
+    db_analytics = []
     total_grade = 0
     
     for i, res in enumerate(model_results):
         audio_rec = audio_records[i] 
         
         analysis_item = {
-            "audio": {
-                "id_audio": audio_rec.id_audio,
-                "id_question": audio_rec.id_question,
-                "id_result": audio_rec.id_result,
-                "filename": audio_rec.filename,
-                "transcript": audio_rec.transcript,
-                "question_text": audio_rec.question.question_content
-            },
+            "id_audio": audio_rec.id_audio,
             "similarity": res["S"],
             "term_coverage": res["C_raw"],
             "speech_coherence": res["H"],
             "question_rec_grade": res["grade"],
             "comment": ""
         }
-        final_analytics.append(analysis_item)
+        db_analytics.append(analysis_item)
         total_grade += res["grade"]
         
     count = len(model_results)
     rec_grade = int(round(total_grade / count)) if count > 0 else 0
 
     result_entry.rec_grade = rec_grade
-    result_entry.analitics_data = final_analytics
+    result_entry.analitics_data = db_analytics
     
     try:
         db.commit()
@@ -71,9 +64,28 @@ def calculate_results(db: Session, data: schemas.CalculateExamRequest) -> dict:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ошибка при сохранении расчетов")
 
+    response_analytics = []
+    for i, res in enumerate(model_results):
+        audio_rec = audio_records[i]
+        response_analytics.append({
+            "audio": {
+                "id_audio": audio_rec.id_audio,
+                "id_question": audio_rec.id_question,
+                "id_result": audio_rec.id_result,
+                "filename": audio_rec.filename,
+                "transcript": audio_rec.transcript,
+                "question_text": audio_rec.question.question_content if audio_rec.question else ""
+            },
+            "similarity": res["S"],
+            "term_coverage": res["C_raw"],
+            "speech_coherence": res["H"],
+            "question_rec_grade": res["grade"],
+            "comment": ""
+        })
+
     return {
         "rec_grade": rec_grade,
-        "analitics_data": final_analytics
+        "analitics_data": response_analytics
     }
 
 def get_student_results(db: Session, student_id: int) -> List[models.ExamResult]:
@@ -150,3 +162,46 @@ def get_group_analytics(db: Session, group_id: int, discipline_id: int) -> dict:
         "discipline_id": discipline_id,
         **stats
     }
+def get_results_by_discipline_and_year(db: Session, discipline_id: int, year: int) -> List[models.ExamResult]:
+    results = db.query(models.ExamResult).join(Test).filter(
+        Test.id_discipline == discipline_id,
+        extract('year', models.ExamResult.date) == year
+    ).all()
+
+    if not results:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Результаты экзаменов для указанной дисциплины и года не найдены"
+        )
+        
+    for result in results:
+        if result.analitics_data and isinstance(result.analitics_data, list):
+            validated_analytics = []
+            
+            for item in result.analitics_data:
+                if isinstance(item, dict):
+                    id_audio = item["audio"].get("id_audio") if "audio" in item else item.get("id_audio")
+                    
+                    audio_rec = db.query(Audio).filter(Audio.id_audio == id_audio).first()
+                    audio_schema = schemas.AudioWithText(
+                        id_audio=audio_rec.id_audio,
+                        id_question=audio_rec.id_question,
+                        id_result=audio_rec.id_result,
+                        filename=audio_rec.filename,
+                        transcript=audio_rec.transcript or "",
+                        question_text=audio_rec.question.question_content if audio_rec.question else ""
+                    )
+
+                    analysis_schema = schemas.QuestionAnalysis(
+                        audio=audio_schema,
+                        similarity=item.get("similarity", 0.0),
+                        term_coverage=item.get("term_coverage", 0.0),
+                        speech_coherence=item.get("speech_coherence", 0.0),
+                        question_rec_grade=item.get("question_rec_grade", 0),
+                        comment=item.get("comment", "")
+                    )
+                    
+                    validated_analytics.append(analysis_schema)
+            result.analitics_data = validated_analytics
+        
+    return results
