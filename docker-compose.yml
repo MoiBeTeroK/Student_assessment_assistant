@@ -21,12 +21,14 @@ services:
       - ./Backend/.env
     environment:
       - TZ=Europe/Moscow
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
     container_name: main_backend
     restart: always
     ports:
       - "8000:8000"
     volumes:
       - ./Backend:/app
+      - huggingface_cache:/root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -77,3 +79,4 @@ services:
 
 volumes:
   postgres_data:
+  huggingface_cache:
