@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 from .serializers import UserSerializer, CreateUserSerializer, UpdateUserSerializer
 from .permissions import IsAdmin, IsAdminOrSelf, is_admin
@@ -29,6 +30,9 @@ class LoginView(APIView):
                 {'detail': 'Учётная запись деактивирована'},
                 status=status.HTTP_403_FORBIDDEN
             )
+
+        for token in OutstandingToken.objects.filter(user=user):
+            BlacklistedToken.objects.get_or_create(token=token)
 
         refresh = RefreshToken.for_user(user)
         return Response({
