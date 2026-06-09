@@ -77,6 +77,15 @@ services:
       django_migrations:
         condition: service_completed_successfully
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: main_dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8888:8080"
+    restart: always
+    
 volumes:
   postgres_data:
   huggingface_cache:

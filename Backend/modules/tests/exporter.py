@@ -7,7 +7,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from fpdf import FPDF
 
-# --- КОНСТАНТЫ ---
+# Константы
 UNIVERSITY_INFO = (
     "ФГБОУ ВО «Кубанский государственный университет»\n"
     "Кафедра вычислительных технологий"
@@ -16,7 +16,7 @@ CHIEF_TITLE = "И. о. заведующего кафедрой вычислит�
 CHIEF_NAME = "Т.А. Приходько"
 FONT_NAME = "Times New Roman"
 
-# --- КЛАСС PDF ---
+# Класс PDF
 class PDF(FPDF):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -24,13 +24,15 @@ class PDF(FPDF):
         font_path = lambda f: os.path.join(base_dir, "static", "fonts", f)
         
         try:
-            self.add_font('TimesNewRoman', '', font_path("TIMES.TTF"), uni=True)
-            self.add_font('TimesNewRoman', 'B', font_path("TIMESBD.TTF"), uni=True)
+            self.add_font('TimesNewRoman', '', font_path("TIMES.ttf"))
+            self.add_font('TimesNewRoman', 'B', font_path("TIMESBD.ttf"))
         except Exception as e:
             raise FileNotFoundError(f"Критическая ошибка: шрифты не найдены. {e}")
 
+
 def get_ticket_header(discipline_name):
     return f"{UNIVERSITY_INFO}\nДисциплина «{discipline_name}»"
+
 
 # Генерация DOCX
 def generate_tests_docx(discipline_name: str, tests: list):
@@ -46,13 +48,15 @@ def generate_tests_docx(discipline_name: str, tests: list):
         run.font.name = FONT_NAME
         run.font.size = Pt(size)
         run.bold = bold
-        if align: p.alignment = align
+        if align: 
+            p.alignment = align
         if keep:
             p.paragraph_format.keep_with_next = True
             p.paragraph_format.keep_together = True
         p.paragraph_format.space_after = Pt(space_after)
         p.paragraph_format.space_before = Pt(space_before)
-        if indent: p.paragraph_format.first_line_indent = Cm(indent)
+        if indent: 
+            p.paragraph_format.first_line_indent = Cm(indent)
         return p
 
     for i, test in enumerate(tests):
@@ -103,6 +107,7 @@ def generate_tests_docx(discipline_name: str, tests: list):
     stream.seek(0)
     return stream
 
+
 # Генерация PDF
 def generate_tests_pdf(discipline_name: str, tests: list):
     pdf = PDF()
@@ -113,6 +118,11 @@ def generate_tests_pdf(discipline_name: str, tests: list):
 
     pdf.add_page()
     
+    # Расчет ширины страницы с учетом полей для корректного переноса текста вопросов
+    indent_width = 10
+    effective_page_width = pdf.w - pdf.l_margin - pdf.r_margin
+    usable_text_width = effective_page_width - indent_width
+
     for i, test in enumerate(tests):
         if pdf.get_y() > 210:
             pdf.add_page()
@@ -129,10 +139,11 @@ def generate_tests_pdf(discipline_name: str, tests: list):
         # Вопросы
         setup_font(size=12)
         for idx, q in enumerate(test.questions, 1):
-            pdf.set_x(20)
-            pdf.multi_cell(0, 6, f"{idx}. {q.question_content}", align='J')
+            # Сдвиг каретки на величину левого поля плюс абзацный отступ
+            pdf.set_x(pdf.l_margin + indent_width)
+            # Передача вычисленной ширины, чтобы избежать выезда за правое поле
+            pdf.multi_cell(usable_text_width, 6, f"{idx}. {q.question_content}", align='J')
         
-        # Подпись
         pdf.ln(5)
         setup_font(size=11)
         pdf.cell(145, 5, CHIEF_TITLE, align='L')
@@ -141,4 +152,10 @@ def generate_tests_pdf(discipline_name: str, tests: list):
         if i < len(tests) - 1:
             pdf.ln(10)
 
-    return io.BytesIO(pdf.output())
+    pdf_bytes = pdf.output()
+    if isinstance(pdf_bytes, str):
+        pdf_bytes = pdf_bytes.encode('utf-8')
+    elif isinstance(pdf_bytes, bytearray):
+        pdf_bytes = bytes(pdf_bytes)
+
+    return io.BytesIO(pdf_bytes)
