@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
 from django.http import HttpResponseRedirect
@@ -6,7 +7,27 @@ from django.urls import reverse
 from .models import UserProfile
 
 
-admin.site.unregister(User)
+class TeacherAwareAdminSite(AdminSite):
+    site_header = 'Система контроля знаний'
+    site_title = 'Администрирование'
+    index_title = 'Управление пользователями'
+
+    def index(self, request, extra_context=None):
+        if request.user.is_authenticated and request.user.groups.filter(name='teacher').exists():
+            return HttpResponseRedirect(
+                reverse('admin:auth_user_change', args=[request.user.pk])
+            )
+        return super().index(request, extra_context)
+
+    def app_index(self, request, app_label, extra_context=None):
+        if request.user.is_authenticated and request.user.groups.filter(name='teacher').exists():
+            return HttpResponseRedirect(
+                reverse('admin:auth_user_change', args=[request.user.pk])
+            )
+        return super().app_index(request, app_label, extra_context)
+
+
+custom_admin_site = TeacherAwareAdminSite(name='admin')
 
 
 class UserProfileInline(admin.StackedInline):
@@ -21,16 +42,15 @@ class UserProfileInline(admin.StackedInline):
         return ['passphrase']
 
     def has_view_permission(self, request, obj=None):
-        return obj is not None and obj.pk == request.user.pk
+        return True
 
     def has_change_permission(self, request, obj=None):
-        return obj is not None and obj.pk == request.user.pk
+        return True
 
     def has_add_permission(self, request, obj=None):
-        return obj is not None and obj.pk == request.user.pk
+        return True
 
 
-@admin.register(User)
 class CustomUserAdmin(UserAdmin):
 
     list_display = ['username', 'first_name', 'last_name', 'email', 'get_role', 'is_active']
@@ -157,10 +177,6 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ['groups']
 
 
-admin.site.unregister(Group)
-
-
-@admin.register(Group)
 class CustomGroupAdmin(admin.ModelAdmin):
     list_display = ['name']
     fields = ['name']
@@ -175,6 +191,5 @@ class CustomGroupAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.site_header = 'Система контроля знаний'
-admin.site.site_title = 'Администрирование'
-admin.site.index_title = 'Управление пользователями'
+custom_admin_site.register(User, CustomUserAdmin)
+custom_admin_site.register(Group, CustomGroupAdmin)
