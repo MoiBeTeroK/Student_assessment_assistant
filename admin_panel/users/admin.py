@@ -139,19 +139,25 @@ class CustomUserAdmin(UserAdmin):
         return True
 
     def has_change_permission(self, request, obj=None):
-        if request.user.groups.filter(name='admin').exists():
-            return True
-        if request.user.groups.filter(name='teacher').exists():
-            if obj is None:
-                return True
-            return obj == request.user
-        return False
+        if not request.user.groups.filter(name__in=['admin', 'teacher']).exists():
+            return False
+        if obj is None:
+            return True  # общий доступ к change-view нужен для работы формы
+        return obj == request.user  # редактировать можно только себя
 
     def has_add_permission(self, request):
         return request.user.groups.filter(name='admin').exists()
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        if not request.user.groups.filter(name='admin').exists():
+            return False
+        if obj is None:
+            return True
+        if obj == request.user:
+            return False
+        if obj.groups.filter(name='admin').exists():
+            return False
+        return True
 
     def has_module_perms(self, app_label):
         return True
