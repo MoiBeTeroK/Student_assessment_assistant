@@ -45,7 +45,8 @@ export const useExam = () => {
                             const grp = s.group_rel ?? s.group;
                             return grp?.id_group === g.id_group;
                         })
-                        .map((s) => ({ id: s.id_student, name: s.name })),
+                        .map((s) => ({ id: s.id_student, name: s.name }))
+                        .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
                 }));
                 setGroups(transformed);
             })
@@ -108,6 +109,14 @@ export const useExam = () => {
             mr.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
                 setRecordings((prev) => ({ ...prev, [questionId]: { blob } }));
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `question_${questionId}_${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+
                 stream.getTracks().forEach((t) => t.stop());
                 clearInterval(timerRef.current);
                 setActiveRecording(null);

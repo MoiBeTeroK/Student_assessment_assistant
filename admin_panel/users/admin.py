@@ -20,20 +20,14 @@ class UserProfileInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         return ['passphrase']
 
-    def get_queryset(self, request):
-        # Всегда возвращаем queryset чтобы форма подгрузила существующий профиль
-        qs = super().get_queryset(request)
-        return qs
-
     def has_view_permission(self, request, obj=None):
-        return request.user.groups.filter(name='teacher').exists()
+        return obj is not None and obj.pk == request.user.pk
 
     def has_change_permission(self, request, obj=None):
-        return request.user.groups.filter(name='teacher').exists()
+        return obj is not None and obj.pk == request.user.pk
 
     def has_add_permission(self, request, obj=None):
-        # Разрешаем добавление если профиля ещё нет
-        return request.user.groups.filter(name='teacher').exists()
+        return obj is not None and obj.pk == request.user.pk
 
 
 @admin.register(User)
@@ -99,9 +93,9 @@ class CustomUserAdmin(UserAdmin):
         return form
 
     def get_inline_instances(self, request, obj=None):
-        if obj and obj.groups.filter(name='teacher').exists():
-            if request.user.groups.filter(name='teacher').exists() and obj.pk == request.user.pk:
-                return [UserProfileInline(self.model, self.admin_site)]
+        if obj and obj.pk == request.user.pk:
+            UserProfile.objects.get_or_create(user=obj)
+            return [UserProfileInline(self.model, self.admin_site)]
         return []
 
     def get_queryset(self, request):

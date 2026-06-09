@@ -19,7 +19,7 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
         secure=SECURE_COOKIE,
         samesite="lax",
         max_age=REFRESH_COOKIE_MAX_AGE,
-        path="/api/auth/refresh/",
+        path="/api/auth/",
     )
 
 
@@ -54,5 +54,5 @@ async def logout(request: Request, response: Response):
     refresh_token = request.cookies.get("refresh_token")
     if refresh_token:
         await service.logout(refresh_token)
-    response.delete_cookie(key="refresh_token", path="/api/auth/refresh/")
+    response.delete_cookie(key="refresh_token", path="/api/auth/")
     return {"detail": "Выход выполнен"}
