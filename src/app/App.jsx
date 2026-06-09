@@ -9,6 +9,7 @@ import { QuestionsPage } from '../pages/questions';
 import { SettingsPage } from '../pages/settings';
 import { StudentsPage } from '../pages/students';
 import { TicketsPage } from '../pages/tickets';
+import { ExamResultsPage } from '../pages/exam-results/ExamResultsPage';
 
 const ProtectedRoute = ({ children }) => {
     const { accessToken, initializing } = useAuth();
@@ -32,6 +33,7 @@ const AppRoutes = () => {
             <Route path="/questions" element={<ProtectedRoute><QuestionsPage /></ProtectedRoute>} />
             <Route path="/tickets" element={<ProtectedRoute><TicketsPage /></ProtectedRoute>} />
             <Route path="/exam" element={<ProtectedRoute><ExamPage /></ProtectedRoute>} />
+            <Route path="/exam-results" element={<ProtectedRoute><ExamResultsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );

@@ -30,7 +30,7 @@ const inputSx = {
     '& input': { fontFamily: '"Montserrat", sans-serif', color: '#2A2A2A' },
 };
 
-export const ExamSetup = ({ tickets, groups, isStudentDone, selectedGroup, setSelectedGroup, selectedStudent, setSelectedStudent, ticketNumber, setTicketNumber, ticketQuestions, onStart }) => {
+export const ExamSetup = ({ tickets, groups, isStudentDone, getStudentGrade, selectedGroup, setSelectedGroup, selectedStudent, setSelectedStudent, ticketNumber, setTicketNumber, ticketQuestions, onStart }) => {
     const students = selectedGroup?.students ?? [];
     const ticketExists = tickets.some((t) => t.name === `Билет №${ticketNumber}`);
 
@@ -72,6 +72,7 @@ export const ExamSetup = ({ tickets, groups, isStudentDone, selectedGroup, setSe
                         <MenuItem value="" disabled>Студент</MenuItem>
                         {students.map((s) => {
                             const done = isStudentDone(s.id);
+                            const grade = done ? getStudentGrade(s.id) : null;
                             return (
                                 <MenuItem
                                     key={s.id}
@@ -79,7 +80,7 @@ export const ExamSetup = ({ tickets, groups, isStudentDone, selectedGroup, setSe
                                     disabled={done}
                                     sx={{ fontFamily: '"Montserrat", sans-serif', color: done ? '#aaa' : '#2A2A2A' }}
                                 >
-                                    {s.name}{done ? ' — уже сдал' : ''}
+                                    {s.name}{done ? ` — оценка ${grade}` : ''}
                                 </MenuItem>
                             );
                         })}

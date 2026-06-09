@@ -6,6 +6,7 @@ const NAV_ITEMS = [
     { label: 'Список вопросов', path: '/questions' },
     { label: 'Билеты', path: '/tickets' },
     { label: 'Список студентов', path: '/students' },
+    { label: 'Итоги экзамена', path: '/exam-results', accent: true },
 ];
 
 export const Navbar = ({ activePath }) => {
@@ -35,8 +36,9 @@ export const Navbar = ({ activePath }) => {
                         sx={{
                             fontSize: '1.2rem',
                             fontWeight: 400,
-                            color: '#2A2A2A',
+                            color: item.accent ? '#5E83AE' : '#2A2A2A',
                             borderColor: '#5E83AE',
+                            borderWidth: item.accent ? 2 : 1,
                             borderRadius: '20px',
                             textTransform: 'none',
                             px: 2.5,

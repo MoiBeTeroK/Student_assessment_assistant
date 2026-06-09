@@ -28,7 +28,7 @@ export const TicketsPage = () => {
 
     const {
         tickets, questions, disciplineId,
-        allQuestionsHaveScore,
+        allQuestionsHaveScore, allQuestionsHaveAnswers,
         autoMode, handleAutoToggle,
         autoModalOpen, handleAutoModalClose, autoCount, setAutoCount, handleAutoGenerate,
         questionSelectOpen, editingTicket,
@@ -113,8 +113,19 @@ export const TicketsPage = () => {
                             </Menu>
                         </Box>
 
+                        {!allQuestionsHaveAnswers && questions.length > 0 && (
+                            <Box sx={{
+                                fontFamily: '"Montserrat", sans-serif',
+                                color: 'rgba(249,245,237,0.7)',
+                                fontSize: '0.9rem',
+                                mb: 1,
+                            }}>
+                                Добавление билетов недоступно — не у всех вопросов заданы эталонные ответы
+                            </Box>
+                        )}
+
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            <AddTicketCard onClick={openCreate} />
+                            <AddTicketCard onClick={openCreate} disabled={!allQuestionsHaveAnswers} />
                             {[...tickets].sort((a, b) => a.test_number - b.test_number).map((t) => (
                                 <TicketCard
                                     key={t.id_test}

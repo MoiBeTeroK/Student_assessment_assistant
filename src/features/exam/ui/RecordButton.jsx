@@ -6,6 +6,8 @@ import {
     Stop as StopIcon,
     Pause as PauseIcon,
     Replay as ReplayIcon,
+    CloudUpload as CloudUploadIcon,
+    CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 
 const BAR_COUNT = 40;
@@ -56,7 +58,7 @@ const Waveform = ({ bars, progress }) => (
     </Box>
 );
 
-export const RecordButton = ({ questionId, isRecording, isDone, blob, onStart, onStop, onRerecord }) => {
+export const RecordButton = ({ questionId, isRecording, isDone, blob, onStart, onStop, onRerecord, onSaveAudio, isSaved }) => {
     const [bars, setBars] = useState([]);
     const [isPlaying, setIsPlaying] = useState(false);
     const [playProgress, setPlayProgress] = useState(0);
@@ -168,6 +170,25 @@ export const RecordButton = ({ questionId, isRecording, isDone, blob, onStart, o
                         }}
                     >
                         <ReplayIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+
+                    <IconButton
+                        onClick={onSaveAudio}
+                        disabled={isPlaying || isSaved}
+                        size="small"
+                        sx={{
+                            color: isSaved
+                                ? 'rgba(100,220,100,0.9)'
+                                : isPlaying
+                                ? 'rgba(249,245,237,0.3)'
+                                : 'rgba(249,245,237,0.7)',
+                            '&:hover': { color: isSaved ? 'rgba(100,220,100,0.9)' : '#F9F5ED' },
+                        }}
+                    >
+                        {isSaved
+                            ? <CheckCircleIcon sx={{ fontSize: 20 }} />
+                            : <CloudUploadIcon sx={{ fontSize: 20 }} />
+                        }
                     </IconButton>
                 </Box>
             )}

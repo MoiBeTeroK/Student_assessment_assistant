@@ -41,10 +41,19 @@ export const TicketCard = ({ ticket, onEdit, onDelete }) => {
     );
 };
 
-export const AddTicketCard = ({ onClick }) => (
+export const AddTicketCard = ({ onClick, disabled }) => (
     <Box
-        sx={{ ...cardSx, alignItems: 'center', justifyContent: 'center' }}
-        onClick={onClick}
+        sx={{
+            ...cardSx,
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...(disabled && {
+                cursor: 'not-allowed',
+                opacity: 0.4,
+                pointerEvents: 'none',
+            }),
+        }}
+        onClick={disabled ? undefined : onClick}
     >
         <AddIcon sx={{ color: '#2A2A2A', fontSize: 34 }} />
     </Box>

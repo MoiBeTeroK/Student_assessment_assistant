@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { storage } from '../../../shared/lib/storage';
+import { convertToWav } from '../../../shared/lib/convertToWav';
 import { useAuth } from '../../../app/AuthContext';
 import { groupsApi } from '../../../shared/api/groupsApi';
 import { studentsApi, usersApi } from '../../../shared/api/studentsApi';
 import { testsApi } from '../../../shared/api/testsApi';
 import { resultsApi } from '../../../shared/api/resultsApi';
+import { storageApi } from '../../../shared/api/storageApi';
 
 const getActiveDisciplineId = () => storage.get('settings_admin')?.activeDisciplineId ?? null;
 
@@ -19,6 +21,7 @@ export const useExam = () => {
     const [tickets, setTickets] = useState([]);
 
     const [recordings, setRecordings] = useState({});
+    const [savedAudios, setSavedAudios] = useState(new Set());
     const [activeRecording, setActiveRecording] = useState(null);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
@@ -34,7 +37,7 @@ export const useExam = () => {
     const [gradeComment, setGradeComment] = useState('');
     const [finalGrade, setFinalGrade] = useState('');
 
-    const savedResults = storage.get('exam_results') ?? [];
+    const [examResults, setExamResults] = useState([]);
 
     useEffect(() => {
         Promise.all([groupsApi.getAll(), studentsApi.getAll()])
@@ -52,6 +55,15 @@ export const useExam = () => {
                 }));
                 setGroups(transformed);
             })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        const disciplineId = getActiveDisciplineId();
+        if (!disciplineId) return;
+        const year = new Date().getFullYear();
+        resultsApi.getByDisciplineAndYear(disciplineId, year)
+            .then(setExamResults)
             .catch(() => {});
     }, []);
 
@@ -81,7 +93,13 @@ export const useExam = () => {
         }));
     };
 
-    const isStudentDone = (studentId) => savedResults.some((r) => r.studentId === studentId);
+    const isStudentDone = (studentId) =>
+        examResults.some((r) => r.id_student === studentId && r.final_grade >= 3);
+
+    const getStudentGrade = (studentId) => {
+        const result = examResults.find((r) => r.id_student === studentId && r.final_grade >= 3);
+        return result?.final_grade ?? null;
+    };
 
     // --- Старт экзамена ---
     const startExam = async () => {
@@ -93,6 +111,18 @@ export const useExam = () => {
             setScreen('recording');
         } catch (e) {
             alert(e.message || 'Ошибка при старте экзамена');
+        }
+    };
+
+    // --- Сохранение аудио ---
+    const saveAudio = async (questionId) => {
+        const rec = recordings[questionId];
+        if (!rec?.blob || !examResultId) return;
+        try {
+            await storageApi.processAudio(questionId, examResultId, rec.blob);
+            setSavedAudios((prev) => new Set([...prev, questionId]));
+        } catch (e) {
+            alert(e.message || 'Ошибка при сохранении аудио');
         }
     };
 
@@ -108,20 +138,22 @@ export const useExam = () => {
                 if (e.data.size > 0) chunksRef.current.push(e.data);
             };
 
-            mr.onstop = () => {
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                setRecordings((prev) => ({ ...prev, [questionId]: { blob } }));
-
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `question_${questionId}_${Date.now()}.webm`;
-                a.click();
-                URL.revokeObjectURL(url);
-
+            mr.onstop = async () => {
+                const webmBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
                 stream.getTracks().forEach((t) => t.stop());
                 clearInterval(timerRef.current);
                 setActiveRecording(null);
+
+                const wavBlob = await convertToWav(webmBlob);
+
+                setRecordings((prev) => ({ ...prev, [questionId]: { blob: wavBlob } }));
+
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `question_${questionId}_${Date.now()}.wav`;
+                a.click();
+                URL.revokeObjectURL(url);
             };
 
             mr.start();
@@ -162,40 +194,29 @@ export const useExam = () => {
     const saveAnswers = async () => {
         setScreen('processing');
         try {
-            setProcessingStep('Сохранение записей в облако...');
-            await new Promise((r) => setTimeout(r, 1000));
-
-            setProcessingStep('Расшифровка ответов...');
-            await new Promise((r) => setTimeout(r, 1200));
-
             setProcessingStep('Подсчёт рекомендуемой оценки...');
-            await new Promise((r) => setTimeout(r, 1000));
-            setRecommendedGrade(4);
-
-            setProcessingStep('Получение комментария...');
-            await new Promise((r) => setTimeout(r, 800));
-            setGradeComment('Студент продемонстрировал хорошее знание материала. Ответы были полными, однако местами не хватало конкретных примеров.');
-            setFinalGrade('4');
-
+            const result = await resultsApi.calculate(examResultId);
+            setRecommendedGrade(result.rec_grade);
             setScreen('results');
-        } catch {
+        } catch (e) {
+            alert(e.message || 'Ошибка при подсчёте оценки');
             setScreen('recording');
         }
     };
 
     const saveFinalResults = async () => {
-        const results = [...savedResults, {
-            studentId: selectedStudent.id,
-            grade: finalGrade,
-            ticketNumber,
-        }];
-        storage.set('exam_results', results);
-
+        try {
+            await resultsApi.setFinalGrade(examResultId, parseFloat(finalGrade));
+        } catch (e) {
+            alert(e.message || 'Ошибка при сохранении оценки');
+            return;
+        }
         setScreen('setup');
         setSelectedGroup(null);
         setSelectedStudent(null);
         setTicketNumber('');
         setRecordings({});
+        setSavedAudios(new Set());
         setRecommendedGrade(null);
         setGradeComment('');
         setFinalGrade('');
@@ -208,9 +229,9 @@ export const useExam = () => {
         selectedGroup, setSelectedGroup,
         selectedStudent, setSelectedStudent,
         ticketNumber, setTicketNumber,
-        getTicketQuestions, getTicket, isStudentDone,
-        recordings, activeRecording,
-        startRecording, stopRecording,
+        getTicketQuestions, getTicket, isStudentDone, getStudentGrade,
+        recordings, savedAudios, activeRecording,
+        saveAudio, startRecording, stopRecording,
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,

@@ -4,8 +4,8 @@ import { RecordButton } from './RecordButton';
 
 const textSx = { fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED' };
 
-export const ExamRecording = ({ questions, recordings, activeRecording, recordingSeconds, onStart, onStop, onRerecord, onSave }) => {
-    const allRecorded = questions.length > 0 && questions.every((q) => recordings[q.id]);
+export const ExamRecording = ({ questions, recordings, savedAudios, activeRecording, recordingSeconds, onStart, onStop, onRerecord, onSaveAudio, onSave }) => {
+    const allSaved = questions.length > 0 && questions.every((q) => savedAudios?.has(q.id));
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -27,6 +27,8 @@ export const ExamRecording = ({ questions, recordings, activeRecording, recordin
                             onStart={() => onStart(q.id)}
                             onStop={onStop}
                             onRerecord={() => onRerecord(q.id)}
+                            onSaveAudio={() => onSaveAudio(q.id)}
+                            isSaved={savedAudios?.has(q.id) ?? false}
                             blob={rec?.blob ?? null}
                         />
                     </Box>
@@ -36,13 +38,13 @@ export const ExamRecording = ({ questions, recordings, activeRecording, recordin
             <Button
                 variant="outlined"
                 onClick={onSave}
-                disabled={!allRecorded}
+                disabled={!allSaved}
                 sx={{
                     fontFamily: '"Montserrat", sans-serif',
                     fontWeight: '400',
-                    backgroundColor: allRecorded ? '#F9F5ED' : 'transparent',
-                    borderColor: allRecorded ? '#2A2A2A' : 'rgba(249,245,237,0.4)',
-                    color: allRecorded ? '#2A2A2A' : 'rgba(249,245,237,0.4)',
+                    backgroundColor: allSaved ? '#F9F5ED' : 'transparent',
+                    borderColor: allSaved ? '#2A2A2A' : 'rgba(249,245,237,0.4)',
+                    color: allSaved ? '#2A2A2A' : 'rgba(249,245,237,0.4)',
                     borderRadius: '20px',
                     textTransform: 'none',
                     fontSize: '1.2rem',

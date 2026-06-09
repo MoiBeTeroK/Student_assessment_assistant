@@ -39,9 +39,9 @@ export const ExamPage = () => {
         selectedGroup, setSelectedGroup,
         selectedStudent, setSelectedStudent,
         ticketNumber, setTicketNumber,
-        getTicketQuestions, isStudentDone,
-        recordings, activeRecording, recordingSeconds,
-        startRecording, stopRecording,
+        getTicketQuestions, isStudentDone, getStudentGrade,
+        recordings, savedAudios, activeRecording, recordingSeconds,
+        saveAudio, startRecording, stopRecording,
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
@@ -60,6 +60,7 @@ export const ExamPage = () => {
                         groups={groups}
                         tickets={tickets}
                         isStudentDone={isStudentDone}
+                        getStudentGrade={getStudentGrade}
                         selectedGroup={selectedGroup}
                         setSelectedGroup={setSelectedGroup}
                         selectedStudent={selectedStudent}
@@ -75,11 +76,13 @@ export const ExamPage = () => {
                     <ExamRecording
                         questions={ticketQuestions}
                         recordings={recordings}
+                        savedAudios={savedAudios}
                         activeRecording={activeRecording}
                         recordingSeconds={recordingSeconds}
                         onStart={startRecording}
                         onStop={stopRecording}
                         onRerecord={openRerecord}
+                        onSaveAudio={saveAudio}
                         onSave={saveAnswers}
                     />
                 )}

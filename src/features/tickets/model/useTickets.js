@@ -36,6 +36,9 @@ export const useTickets = () => {
     // Автоматическое добавление доступно только если у всех вопросов есть complexity_score
     const allQuestionsHaveScore = questions.length > 0 && questions.every((q) => q.complexity_score != null);
 
+    // Добавление билетов доступно только если у всех вопросов заданы эталонные ответы
+    const allQuestionsHaveAnswers = questions.length > 0 && questions.every((q) => q.standard_answer);
+
     const getManualLimit = () => {
         const s = getSettings();
         return s.manualCount ? parseInt(s.manualCount) : 3;
@@ -182,7 +185,7 @@ export const useTickets = () => {
 
     return {
         tickets, questions, disciplineId,
-        allQuestionsHaveScore,
+        allQuestionsHaveScore, allQuestionsHaveAnswers,
         autoMode, handleAutoToggle,
         autoModalOpen, handleAutoModalClose, autoCount, setAutoCount, handleAutoGenerate,
         questionSelectOpen, editingTicket,
