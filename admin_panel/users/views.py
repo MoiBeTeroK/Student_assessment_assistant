@@ -33,20 +33,23 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        has_active_session = OutstandingToken.objects.filter(
-            user=user,
-            expires_at__gt=timezone.now(),
-        ).exclude(id__in=BlacklistedToken.objects.values('token_id')).exists()
+        profile, _ = UserProfile.objects.get_or_create(user=user)
 
-        if has_active_session:
-            return Response(
-                {'detail': 'Вы уже вошли в систему с другого устройства'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if profile.active_jti:
+            has_valid_tokens = OutstandingToken.objects.filter(
+                user=user,
+                expires_at__gt=timezone.now(),
+            ).exclude(id__in=BlacklistedToken.objects.values('token_id')).exists()
+
+            if has_valid_tokens:
+                return Response(
+                    {'detail': 'Вы уже вошли в систему с другого устройства'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Сессия протухла сама по себе — разрешаем вход
+            profile.active_jti = ''
 
         refresh = RefreshToken.for_user(user)
-
-        profile, _ = UserProfile.objects.get_or_create(user=user)
         profile.active_jti = str(refresh.access_token['jti'])
         profile.save(update_fields=['active_jti'])
 
@@ -64,14 +67,25 @@ class LogoutView(APIView):
         refresh = request.data.get('refresh')
         if not refresh:
             return Response({'detail': 'Refresh-токен не передан'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Декодируем payload без валидации, чтобы получить user_id даже если токен уже невалиден
+        user_id = None
         try:
-            token = RefreshToken(refresh)
-            user_id = token.get('user_id')
-            token.blacklist()
-            if user_id:
-                UserProfile.objects.filter(user_id=user_id).update(active_jti='')
+            import base64, json
+            payload = refresh.split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            user_id = json.loads(base64.b64decode(payload)).get('user_id')
+        except Exception:
+            pass
+
+        try:
+            RefreshToken(refresh).blacklist()
         except TokenError:
-            pass  # Токен уже истёк или недействителен — всё равно считаем выход успешным
+            pass
+
+        if user_id:
+            UserProfile.objects.filter(user_id=user_id).update(active_jti='')
+
         return Response({'detail': 'Выход выполнен'})
 
 
