@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { Navbar } from '../../shared/ui/Navbar';
 import { QuestionRow } from '../../features/questions/ui/QuestionRow';
 import { AddQuestionModal } from '../../features/questions/ui/AddQuestionModal';
@@ -18,6 +21,8 @@ const btnSx = {
 };
 
 export const QuestionsPage = () => {
+    const [exportAnchor, setExportAnchor] = useState(null);
+
     const {
         questions, pendingQuestions, setPendingQuestions, disciplineId,
         addModalOpen, setAddModalOpen,
@@ -63,9 +68,19 @@ export const QuestionsPage = () => {
                                     Добавить вопрос вручную
                                 </Button>
                                 {!hasPending && (
-                                    <Button variant="outlined" onClick={() => exportQuestions('docx')} sx={btnSx}>
-                                        Экспорт вопросов
-                                    </Button>
+                                    <>
+                                        <Button variant="outlined" onClick={(e) => setExportAnchor(e.currentTarget)} sx={btnSx}>
+                                            Экспорт вопросов
+                                        </Button>
+                                        <Menu
+                                            anchorEl={exportAnchor}
+                                            open={Boolean(exportAnchor)}
+                                            onClose={() => setExportAnchor(null)}
+                                        >
+                                            <MenuItem onClick={() => { exportQuestions('docx'); setExportAnchor(null); }}>DOCX</MenuItem>
+                                            <MenuItem onClick={() => { exportQuestions('pdf'); setExportAnchor(null); }}>PDF</MenuItem>
+                                        </Menu>
+                                    </>
                                 )}
                                 {!hasPending && (
                                     <Button variant="outlined" onClick={clearAllQuestions} sx={btnSx}>

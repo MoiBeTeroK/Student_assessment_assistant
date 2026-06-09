@@ -3,6 +3,8 @@ import os
 import httpx
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8001")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-here")
@@ -23,21 +25,9 @@ async def login(username: str, password: str) -> dict:
                 detail="Сервис авторизации недоступен",
             )
 
-    if response.status_code == status.HTTP_401_UNAUTHORIZED:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный логин или пароль",
-        )
-    if response.status_code == status.HTTP_403_FORBIDDEN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Учётная запись деактивирована",
-        )
     if not response.is_success:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Ошибка сервиса авторизации",
-        )
+        detail = response.json().get("detail", "Ошибка авторизации") if response.content else "Ошибка авторизации"
+        raise HTTPException(status_code=response.status_code, detail=detail)
 
     return response.json()
 
@@ -77,13 +67,28 @@ async def logout(refresh: str) -> None:
             pass  # Блэклист best-effort: cookie всё равно очистим
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str, db: Session | None = None) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Токен недействителен или истёк",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if db is not None:
+        user_id = payload.get("user_id")
+        if user_id:
+            row = db.execute(
+                text("SELECT active_jti FROM user_profile WHERE user_id = :uid"),
+                {"uid": user_id},
+            ).fetchone()
+            if row is not None and row[0] == '':
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Сессия завершена",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+    return payload

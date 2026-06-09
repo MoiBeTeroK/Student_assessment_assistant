@@ -38,14 +38,14 @@ export const useTickets = () => {
 
     const getManualLimit = () => {
         const s = getSettings();
-        return s.manualCount ? parseInt(s.manualCount) : Infinity;
+        return s.manualCount ? parseInt(s.manualCount) : 3;
     };
 
     // Лимит зависит от режима: ручной → manualCount, авто → autoCount
     const getEffectiveLimit = () => {
         const s = getSettings();
-        if (autoMode) return s.autoCount ? parseInt(s.autoCount) : Infinity;
-        return s.manualCount ? parseInt(s.manualCount) : Infinity;
+        if (autoMode) return s.autoCount ? parseInt(s.autoCount) : 3;
+        return s.manualCount ? parseInt(s.manualCount) : 3;
     };
 
     // --- Автоматический режим ---
@@ -160,11 +160,19 @@ export const useTickets = () => {
         if (!disciplineId) return;
         try {
             const res = await testsApi.export(disciplineId, format);
+            const cd = res.headers.get('Content-Disposition') ?? '';
+            const rfcMatch = cd.match(/filename\*=UTF-8''(.+)/i);
+            const plainMatch = cd.match(/filename="?([^";\n]+)"?/i);
+            const filename = rfcMatch
+                ? decodeURIComponent(rfcMatch[1])
+                : plainMatch
+                ? plainMatch[1]
+                : `tickets.${format}`;
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `tickets.${format}`;
+            a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
         } catch (e) {

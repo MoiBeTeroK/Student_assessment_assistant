@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
+from .models import UserProfile
 from .serializers import UserSerializer, CreateUserSerializer, UpdateUserSerializer
 from .permissions import IsAdmin, IsAdminOrSelf, is_admin
 
@@ -31,10 +33,26 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        for token in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        if profile.active_jti:
+            has_valid_tokens = OutstandingToken.objects.filter(
+                user=user,
+                expires_at__gt=timezone.now(),
+            ).exclude(id__in=BlacklistedToken.objects.values('token_id')).exists()
+
+            if has_valid_tokens:
+                return Response(
+                    {'detail': 'Вы уже вошли в систему с другого устройства'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Сессия протухла сама по себе — разрешаем вход
+            profile.active_jti = ''
 
         refresh = RefreshToken.for_user(user)
+        profile.active_jti = str(refresh.access_token['jti'])
+        profile.save(update_fields=['active_jti'])
+
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
@@ -49,10 +67,25 @@ class LogoutView(APIView):
         refresh = request.data.get('refresh')
         if not refresh:
             return Response({'detail': 'Refresh-токен не передан'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Декодируем payload без валидации, чтобы получить user_id даже если токен уже невалиден
+        user_id = None
+        try:
+            import base64, json
+            payload = refresh.split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            user_id = json.loads(base64.b64decode(payload)).get('user_id')
+        except Exception:
+            pass
+
         try:
             RefreshToken(refresh).blacklist()
         except TokenError:
-            pass  # Токен уже истёк или недействителен — всё равно считаем выход успешным
+            pass
+
+        if user_id:
+            UserProfile.objects.filter(user_id=user_id).update(active_jti='')
+
         return Response({'detail': 'Выход выполнен'})
 
 
