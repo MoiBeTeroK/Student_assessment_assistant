@@ -12,7 +12,7 @@ export const storageApi = {
         form.append('id_question', idQuestion);
         form.append('id_result', idResult);
         form.append('file', blob, `question_${idQuestion}_${Date.now()}.wav`);
-        return apiFetch('/storage/process-audio', {
+        return apiFetch('/api/storage/process-audio', {
             method: 'POST',
             body: form,
         }).then(toJson);

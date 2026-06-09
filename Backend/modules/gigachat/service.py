@@ -17,8 +17,11 @@ async def _get_token() -> str:
     if _token and time.time() < _token_expires_at - 60:
         return _token
 
-    credentials = os.getenv("GIGACHAT_CREDENTIALS", "")
-    scope       = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
+    credentials = os.getenv("GIGACHAT_CREDENTIALS", "").strip()
+    scope       = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS").strip()
+
+    if not credentials:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "GigaChat: переменная GIGACHAT_CREDENTIALS не задана на сервере")
 
     async with httpx.AsyncClient(verify=False) as client:
         try:
