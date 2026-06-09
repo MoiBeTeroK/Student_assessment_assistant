@@ -1,7 +1,11 @@
 import os
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
+from database import get_db
+from .dependencies import get_current_user
 from . import service
 from .schemas import AccessTokenResponse, LoginRequest, LoginResponse
 
@@ -47,6 +51,19 @@ async def refresh(request: Request, response: Response):
     if "refresh" in result:
         _set_refresh_cookie(response, result["refresh"])
     return {"access": result["access"]}
+
+
+@router.get("/me/", summary="Данные текущего пользователя")
+def get_me(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user_id = current_user.get("user_id")
+    row = db.execute(
+        text("SELECT passphrase FROM user_profile WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).fetchone()
+    return {"passphrase": row[0] if row else ""}
 
 
 @router.post("/logout/", summary="Выход из системы")

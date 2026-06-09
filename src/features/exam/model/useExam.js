@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { storage } from '../../../shared/lib/storage';
+import { useAuth } from '../../../app/AuthContext';
 import { groupsApi } from '../../../shared/api/groupsApi';
-import { studentsApi } from '../../../shared/api/studentsApi';
+import { studentsApi, usersApi } from '../../../shared/api/studentsApi';
 import { testsApi } from '../../../shared/api/testsApi';
 import { resultsApi } from '../../../shared/api/resultsApi';
 
@@ -23,9 +24,10 @@ export const useExam = () => {
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
 
+    const { user } = useAuth();
+
     const [rerecordModal, setRerecordModal] = useState(null);
     const [passphrase, setPassphrase] = useState('');
-    const PASSPHRASE = 'reset';
 
     const [processingStep, setProcessingStep] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(null);
@@ -140,8 +142,13 @@ export const useExam = () => {
         setPassphrase('');
     };
 
-    const confirmRerecord = () => {
-        if (passphrase !== PASSPHRASE) return;
+    const confirmRerecord = async () => {
+        try {
+            const me = await usersApi.getMe();
+            if (!me.passphrase || passphrase !== me.passphrase) return;
+        } catch {
+            return;
+        }
         setRecordings((prev) => {
             const next = { ...prev };
             delete next[rerecordModal];

@@ -1,5 +1,15 @@
 import { apiFetch } from './authApi';
 
+const toJsonUsers = async (res) => {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Ошибка запроса');
+    return data;
+};
+
+export const usersApi = {
+    getMe: () => apiFetch('/api/auth/me/').then(toJsonUsers),
+};
+
 const BASE = '/api/students';
 
 const toJson = async (res) => {

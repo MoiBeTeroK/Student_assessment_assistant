@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
-import { Close as CloseIcon } from '@mui/icons-material';
+import InputAdornment from '@mui/material/InputAdornment';
+import { Close as CloseIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 
 export const RerecordModal = ({ open, passphrase, onChange, onConfirm, onClose }) => {
+    const [show, setShow] = useState(false);
+
     if (!open) return null;
 
     const inputSx = {
@@ -44,11 +48,26 @@ export const RerecordModal = ({ open, passphrase, onChange, onConfirm, onClose }
                 <TextField
                     fullWidth
                     size="small"
-                    type="password"
+                    type="text"
                     value={passphrase}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder="Кодовая фраза"
                     sx={inputSx}
+                    inputProps={{
+                        style: { WebkitTextSecurity: show ? 'none' : 'disc' },
+                    }}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton size="small" onClick={() => setShow((s) => !s)} edge="end">
+                                    {show
+                                        ? <VisibilityOff sx={{ fontSize: 20, color: '#5E83AE' }} />
+                                        : <Visibility sx={{ fontSize: 20, color: '#5E83AE' }} />
+                                    }
+                                </IconButton>
+                            </InputAdornment>
+                        ),
+                    }}
                 />
 
                 <Button
