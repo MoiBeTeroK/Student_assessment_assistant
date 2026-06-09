@@ -8,12 +8,25 @@ from . import models
 from speech_to_text.speech_to_text_main.speach_to_text_new import run_stt_pipeline
 from speech_to_text.speech_to_text_main.config import MODEL_DIR
 
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
-    aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
-    endpoint_url=os.getenv("S3_ENDPOINT")
-)
+# Переводим S3 клиент на ленивую инициализацию (изначально пуст)
+_s3_client_instance = None
+
+
+def get_s3_client():
+    """
+    Ленивая инициализация S3 клиента при первом обращении к ручкам.
+    Предотвращает падение контейнера при старте, если сеть или ключи недоступны.
+    """
+    global _s3_client_instance
+    if _s3_client_instance is None:
+        _s3_client_instance = boto3.client(
+            "s3",
+            aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+            aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+            endpoint_url=os.getenv("S3_ENDPOINT")
+        )
+    return _s3_client_instance
+
 
 def upload_audio(file: UploadFile) -> dict:
     if not file.content_type.startswith("audio/"):
@@ -22,6 +35,9 @@ def upload_audio(file: UploadFile) -> dict:
     filename = file.filename
 
     try:
+        # Получаем клиент лениво
+        s3_client = get_s3_client()
+        
         s3_client.upload_fileobj(
             file.file,
             os.getenv("S3_BUCKET_NAME"),
@@ -38,6 +54,7 @@ def upload_audio(file: UploadFile) -> dict:
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Ошибка загрузки: {str(e)}")
 
+
 async def process_audio(db: Session, id_question: int, id_result: int, file: UploadFile) -> dict:
     if not file.content_type.startswith("audio/"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файл должен быть аудиозаписью")
@@ -48,6 +65,9 @@ async def process_audio(db: Session, id_question: int, id_result: int, file: Upl
         bucket = os.getenv("S3_BUCKET_NAME")
         filename = file.filename
         
+        # Получаем клиент лениво
+        s3_client = get_s3_client()
+        
         s3_client.put_object(
             Bucket=bucket,
             Key=filename,
@@ -57,6 +77,9 @@ async def process_audio(db: Session, id_question: int, id_result: int, file: Upl
         
         endpoint = os.getenv("S3_ENDPOINT").replace("https://", "").replace("http://", "")
         file_url = f"https://{bucket}.{endpoint}/{filename}"
+        
+        # Вызов офлайн-пайплайна распознавания.
+        # Модели ASR подгрузятся из MODEL_DIR лениво строго в этой строчке кода!
         transcript_text = run_stt_pipeline(audio_bytes, str(MODEL_DIR))
         
         new_audio = models.Audio(
@@ -79,6 +102,7 @@ async def process_audio(db: Session, id_question: int, id_result: int, file: Upl
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Ошибка при обработке: {str(e)}")
+
 
 def get_all_audios(db: Session) -> List[models.Audio]:
     try:

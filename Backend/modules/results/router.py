@@ -33,3 +33,7 @@ def set_final_grade(id_result: int, data: schemas.FinalGradePut, db: Session = D
 @router.get("/analytics/group/{group_id}/discipline/{discipline_id}", response_model=schemas.GroupAnalyticsOut, summary="Вывод аналитики")
 def get_group_analytics(group_id: int, discipline_id: int, db: Session = Depends(get_db)):
     return service.get_group_analytics(db, group_id, discipline_id)
+
+@router.get("/filter/discipline/{discipline_id}/year/{year}", response_model=List[schemas.ExamResultOut], summary="Получить результаты по дисциплине и году")
+def get_results_by_discipline_and_year(discipline_id: int, year: int, db: Session = Depends(get_db)):
+    return service.get_results_by_discipline_and_year(db, discipline_id, year)

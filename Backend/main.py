@@ -20,10 +20,10 @@ app = FastAPI(title="Student assessment assistant")
 # async def load_stt_models():
 #     print("Предзагрузка Speech-To-Text моделей...")
 #     init_asr(str(MODEL_DIR))
-#
+
 #     print("Загружается модель пунктуации...")
 #     init_punctuation()
-#
+
 #     print("Все модели успешно загружены")
 
 origins = [
