@@ -9,6 +9,7 @@ from modules.tests.router import router as tests_router
 from modules.questions.router import router as questions_router
 from modules.results.router import router as results_router
 from modules.storage.router import router as storage_router
+from modules.gigachat.router import router as gigachat_router
 
 app = FastAPI(title="Student assessment assistant")
 
@@ -36,3 +37,4 @@ app.include_router(tests_router, prefix="/api")
 app.include_router(questions_router, prefix="/api")
 app.include_router(results_router, prefix="/api")
 app.include_router(storage_router, prefix="/api")
+app.include_router(gigachat_router, prefix="/api")

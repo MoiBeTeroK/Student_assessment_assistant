@@ -45,6 +45,7 @@ export const ExamPage = () => {
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
+        generateComment, generatingComment,
         saveFinalResults,
     } = useExam();
 
@@ -94,6 +95,8 @@ export const ExamPage = () => {
                         finalGrade={finalGrade}
                         setFinalGrade={setFinalGrade}
                         onSave={saveFinalResults}
+                        onGenerateComment={generateComment}
+                        generatingComment={generatingComment}
                     />
                 )}
             </Box>

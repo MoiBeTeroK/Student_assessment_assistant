@@ -7,6 +7,7 @@ import { Navbar } from '../../shared/ui/Navbar';
 import { QuestionRow } from '../../features/questions/ui/QuestionRow';
 import { AddQuestionModal } from '../../features/questions/ui/AddQuestionModal';
 import { useQuestions } from '../../features/questions/model/useQuestions';
+import { gigachatApi } from '../../shared/api/gigachatApi';
 
 const btnSx = {
     fontFamily: '"Montserrat", sans-serif',
@@ -153,6 +154,7 @@ export const QuestionsPage = () => {
                 open={addModalOpen}
                 onClose={() => setAddModalOpen(false)}
                 onSave={addQuestion}
+                onGenerateAnswer={(text) => gigachatApi.generateAnswerByText(text, disciplineId).then((r) => r.text)}
                 title="Добавление вопроса"
             />
 
@@ -161,6 +163,7 @@ export const QuestionsPage = () => {
                 open={editModalOpen}
                 onClose={() => setEditModalOpen(false)}
                 onSave={saveEdit}
+                onGenerateAnswer={(text) => gigachatApi.generateAnswerByText(text, disciplineId).then((r) => r.text)}
                 initialData={editingQuestion}
                 title="Редактирование вопроса"
             />

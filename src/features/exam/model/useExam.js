@@ -7,6 +7,7 @@ import { studentsApi, usersApi } from '../../../shared/api/studentsApi';
 import { testsApi } from '../../../shared/api/testsApi';
 import { resultsApi } from '../../../shared/api/resultsApi';
 import { storageApi } from '../../../shared/api/storageApi';
+import { gigachatApi } from '../../../shared/api/gigachatApi';
 
 const getActiveDisciplineId = () => storage.get('settings_admin')?.activeDisciplineId ?? null;
 
@@ -36,6 +37,7 @@ export const useExam = () => {
     const [recommendedGrade, setRecommendedGrade] = useState(null);
     const [gradeComment, setGradeComment] = useState('');
     const [finalGrade, setFinalGrade] = useState('');
+    const [generatingComment, setGeneratingComment] = useState(false);
 
     const [examResults, setExamResults] = useState([]);
 
@@ -204,6 +206,19 @@ export const useExam = () => {
         }
     };
 
+    const generateComment = async () => {
+        if (!examResultId) return;
+        setGeneratingComment(true);
+        try {
+            const { text } = await gigachatApi.generateComment(examResultId);
+            setGradeComment(text);
+        } catch (e) {
+            alert(e.message || 'Ошибка генерации комментария');
+        } finally {
+            setGeneratingComment(false);
+        }
+    };
+
     const saveFinalResults = async () => {
         try {
             await resultsApi.setFinalGrade(examResultId, parseFloat(finalGrade));
@@ -235,6 +250,7 @@ export const useExam = () => {
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
+        generateComment, generatingComment,
         saveFinalResults, examResultId,
     };
 };

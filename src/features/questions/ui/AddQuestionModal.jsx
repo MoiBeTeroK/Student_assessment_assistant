@@ -16,7 +16,7 @@ const inputSx = {
     '& input, & textarea': { fontFamily: '"Montserrat", sans-serif', color: '#2A2A2A' },
 };
 
-export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, title = 'Добавление вопроса' }) => {
+export const AddQuestionModal = ({ open, onClose, onSave, onGenerateAnswer, initialData = null, title = 'Добавление вопроса' }) => {
     const [questionContent, setQuestionContent] = useState(initialData?.question_content ?? '');
     const [complexityScore, setComplexityScore] = useState(initialData?.complexity_score ?? '');
     const [standardAnswer, setStandardAnswer] = useState(initialData?.standard_answer ?? '');
@@ -33,14 +33,14 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
         });
     };
 
-    const generateAnswer = async () => {
+    const handleGenerateAnswer = async () => {
+        if (!onGenerateAnswer) return;
         setLoadingAnswer(true);
         try {
-            // бэк
-            await new Promise((r) => setTimeout(r, 1200));
-            setStandardAnswer(`Эталонный ответ на вопрос: "${questionContent}". Здесь будет ответ от бэкенда.`);
-        } catch {
-            setStandardAnswer('Ошибка генерации ответа');
+            const text = await onGenerateAnswer(questionContent.trim());
+            setStandardAnswer(text);
+        } catch (e) {
+            alert(e.message || 'Ошибка генерации ответа');
         } finally {
             setLoadingAnswer(false);
         }
@@ -107,8 +107,8 @@ export const AddQuestionModal = ({ open, onClose, onSave, initialData = null, ti
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Button
                         variant="outlined"
-                        onClick={generateAnswer}
-                        disabled={loadingAnswer || !questionContent.trim()}
+                        onClick={handleGenerateAnswer}
+                        disabled={loadingAnswer || !questionContent.trim() || !onGenerateAnswer}
                         sx={{
                             fontFamily: '"Montserrat", sans-serif',
                             textTransform: 'none',
