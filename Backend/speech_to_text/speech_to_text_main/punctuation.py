@@ -4,6 +4,21 @@
 # from typing import Optional
 
 # logger = logging.getLogger(__name__)
+
+# _restorer_instance = None
+
+# def init_punctuation():
+#     global _restorer_instance
+#     if _restorer_instance is None:
+#         print("Предзагрузка модели пунктуации...")
+#         _restorer_instance = PunctuationRestorer(use_gpu=False) 
+#     return _restorer_instance
+
+# def get_restorer():
+#     if _restorer_instance is None:
+#         return init_punctuation()
+#     return _restorer_instance
+
 # class PunctuationRestorer:
 #     def __init__(self, use_gpu: bool = True):
 #         try:
@@ -14,14 +29,14 @@
 #                 "Установи: pip install deepmultilingualpunctuation"
 #             )
 
-#         import torch
-#         device = "cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"
+#         # Выбираем устройство
+#         self.device = "cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"
 
-#         print(f"✏️  Загружаем модель пунктуации на {device}...")
-#         self._model = PunctuationModel()
-#         print("✅ Модель пунктуации загружена.")
+#         self._model = PunctuationModel(model="oliverguhr/fullstop-punctuation-multilang-large")
+#         print("Модель пунктуации загружена.")
 
 #     def restore(self, text: str) -> str:
+#         """Восстановление знаков для отдельной строки"""
 #         if not text or not text.strip():
 #             return text
 
@@ -33,11 +48,28 @@
 #             return text
 
 #     def restore_segments(self, segments: list[dict]) -> list[dict]:
-#         for seg in segments:
-#             original = seg.get("text", "")
-#             if original.strip():
-#                 seg["text"] = self.restore(original)
-#         return segments
+#         if not segments:
+#             return []
+
+#         texts = [seg.get("text", "").strip() for seg in segments if seg.get("text")]
+        
+#         if not texts:
+#             return segments
+
+#         full_text = " ".join(texts)
+        
+#         try:
+#             restored_full = self._model.restore_punctuation(full_text)
+#             processed_full = _post_process(restored_full)
+#             for seg in segments:
+#                 if seg.get("text"):
+#                     seg["text"] = self.restore(seg["text"])
+                    
+#             return segments
+            
+#         except Exception as e:
+#             logger.error(f"Критическая ошибка в restore_segments: {e}")
+#             return segments
 
 
 # def _post_process(text: str) -> str:
@@ -52,20 +84,19 @@
 #     if not text:
 #         return text
 
-#     result = []
-#     capitalize_next = True
+#     sentences = re.split(r'([\.\!\?]\s*)', text)
+#     result = ""
+#     for i in range(0, len(sentences), 2):
+#         sentence = sentences[i]
+#         punctuation = sentences[i+1] if i+1 < len(sentences) else ""
+#         if sentence:
+#             sentence = sentence[0].upper() + sentence[1:]
+#         result += sentence + punctuation
+        
+#     return result
 
-#     for i, ch in enumerate(text):
-#         if capitalize_next and ch.isalpha():
-#             result.append(ch.upper())
-#             capitalize_next = False
-#         else:
-#             result.append(ch)
-#             if ch in '.!?' and i + 1 < len(text) and text[i + 1] == ' ':
-#                 capitalize_next = True
-
-#     return ''.join(result)
 from __future__ import annotations
+import os
 import re
 import logging
 from typing import Optional
@@ -77,14 +108,16 @@ _restorer_instance = None
 def init_punctuation():
     global _restorer_instance
     if _restorer_instance is None:
-        print("Предзагрузка модели пунктуации...")
+        print(" [Punctuation] Первая фиксация вызова. Начинается ленивая загрузка модели...")
         _restorer_instance = PunctuationRestorer(use_gpu=False) 
     return _restorer_instance
+
 
 def get_restorer():
     if _restorer_instance is None:
         return init_punctuation()
     return _restorer_instance
+
 
 class PunctuationRestorer:
     def __init__(self, use_gpu: bool = True):
@@ -99,8 +132,22 @@ class PunctuationRestorer:
         # Выбираем устройство
         self.device = "cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"
 
-        self._model = PunctuationModel(model="oliverguhr/fullstop-punctuation-multilang-large")
-        print("Модель пунктуации загружена.")
+        # ИЗМЕНЕНИЕ: Путь к локальной папке, куда ты заранее скачаешь файлы модели.
+        # Пусть она лежит внутри твоего модуля, например: speech_to_text/models/punctuation_model
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        local_model_path = os.path.join(current_dir, "models", "punctuation_model")
+        
+        # Если локальной папки нет, оставляем дефолтное имя для совместимости,
+        # но для работы в автономном Докере папка обязательна!
+        if os.path.exists(local_model_path):
+            target_model = local_model_path
+            print(f" [Punctuation] Загрузка весов строго из локальной директории: {target_model}")
+        else:
+            target_model = "oliverguhr/fullstop-punctuation-multilang-large"
+            print(f" ⚠ [Punctuation] Локальная папка не найдена. Откат на интернет-репозиторий: {target_model}")
+
+        self._model = PunctuationModel(model=target_model)
+        print(" ✓ [Punctuation] Модель пунктуации успешно загружена.")
 
     def restore(self, text: str) -> str:
         """Восстановление знаков для отдельной строки"""

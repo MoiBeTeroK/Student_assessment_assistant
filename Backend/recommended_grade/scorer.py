@@ -247,7 +247,7 @@ class StudentAnswerScorer:
             cfg = json.load(f)
         base_model = cfg.get("model_name", "DeepPavlov/rubert-base-cased")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
 
         self.model = SiameseRuBERT(base_model).to(self.device)
         self.model.load_state_dict(

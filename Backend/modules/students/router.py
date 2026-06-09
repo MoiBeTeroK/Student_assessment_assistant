@@ -37,3 +37,7 @@ def patch_students_batch(students_data: List[schemas.StudentImportSchema], db: S
 @router.post("/import-from-file", response_model=schemas.ImportResponse, summary="Загрузить файл и сохранить")
 async def import_from_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     return await service.import_from_file(db, file)
+
+@router.post("/import-group-from-file", response_model=schemas.ImportResponse, summary="Загрузить студентов конкретной группы")
+async def import_group_from_file(group_name: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    return await service.import_single_group_from_file(db, file, group_name)
