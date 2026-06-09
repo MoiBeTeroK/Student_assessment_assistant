@@ -25,21 +25,9 @@ async def login(username: str, password: str) -> dict:
                 detail="Сервис авторизации недоступен",
             )
 
-    if response.status_code == status.HTTP_401_UNAUTHORIZED:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный логин или пароль",
-        )
-    if response.status_code == status.HTTP_403_FORBIDDEN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Учётная запись деактивирована",
-        )
     if not response.is_success:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Ошибка сервиса авторизации",
-        )
+        detail = response.json().get("detail", "Ошибка авторизации") if response.content else "Ошибка авторизации"
+        raise HTTPException(status_code=response.status_code, detail=detail)
 
     return response.json()
 
