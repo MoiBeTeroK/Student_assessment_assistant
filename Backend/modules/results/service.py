@@ -4,7 +4,7 @@ from sqlalchemy import extract
 from datetime import datetime
 from typing import List
 
-from dependencies import scorer
+from dependencies import get_scorer
 from . import models, schemas, analytics
 
 from modules.students.models import Student
@@ -33,6 +33,7 @@ def calculate_results(db: Session, data: schemas.CalculateExamRequest) -> dict:
             "student": audio_entry.transcript or "",
         })
 
+    scorer = get_scorer()
     model_results = scorer.score_batch(rows_for_scorer)
     
     db_analytics = []
@@ -88,6 +89,40 @@ def calculate_results(db: Session, data: schemas.CalculateExamRequest) -> dict:
         "analitics_data": response_analytics
     }
 
+def _enrich_analytics_data(db: Session, result: models.ExamResult) -> models.ExamResult:
+    if result.analitics_data and isinstance(result.analitics_data, list):
+        validated_analytics = []
+        
+        for item in result.analitics_data:
+            if isinstance(item, dict):
+                id_audio = item["audio"].get("id_audio") if "audio" in item else item.get("id_audio")
+                
+                audio_rec = db.query(Audio).filter(Audio.id_audio == id_audio).first()
+                if audio_rec:
+                    audio_schema = schemas.AudioWithText(
+                        id_audio=audio_rec.id_audio,
+                        id_question=audio_rec.id_question,
+                        id_result=audio_rec.id_result,
+                        filename=audio_rec.filename,
+                        transcript=audio_rec.transcript or "",
+                        question_text=audio_rec.question.question_content if audio_rec.question else ""
+                    )
+
+                    analysis_schema = schemas.QuestionAnalysis(
+                        audio=audio_schema,
+                        similarity=item.get("similarity", 0.0),
+                        term_coverage=item.get("term_coverage", 0.0),
+                        speech_coherence=item.get("speech_coherence", 0.0),
+                        question_rec_grade=item.get("question_rec_grade", 0),
+                        comment=item.get("comment", "")
+                    )
+                    validated_analytics.append(analysis_schema)
+                    
+        result.analitics_data = validated_analytics
+        
+    return result
+
+
 def get_student_results(db: Session, student_id: int) -> List[models.ExamResult]:
     if not db.query(Student).filter(Student.id_student == student_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Студент не найден")
@@ -96,13 +131,17 @@ def get_student_results(db: Session, student_id: int) -> List[models.ExamResult]
     if not results:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Результаты не найдены")
         
+    for result in results:
+        _enrich_analytics_data(db, result)
+        
     return results
+
 
 def get_result_by_id(db: Session, result_id: int) -> models.ExamResult:
     result = db.query(models.ExamResult).filter(models.ExamResult.id_result == result_id).first()
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Результат не найден")
-    return result
+    return _enrich_analytics_data(db, result)
 
 def start_exam(db: Session, data: schemas.ExamResultCreate) -> models.ExamResult:
     if not db.query(Student).filter(Student.id_student == data.id_student).first():
@@ -140,11 +179,12 @@ def set_final_grade(db: Session, id_result: int, data: schemas.FinalGradePut) ->
     try:
         db.commit()
         db.refresh(result)
-        return result
+        return _enrich_analytics_data(db, result)
+        
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ошибка при сохранении данных")
-
+    
 def get_group_analytics(db: Session, group_id: int, discipline_id: int) -> dict:
     results = db.query(models.ExamResult).join(Student).join(Test).filter(
         Student.id_group == group_id,

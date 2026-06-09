@@ -9,21 +9,21 @@ from modules.questions.router import router as questions_router
 from modules.results.router import router as results_router
 from modules.storage.router import router as storage_router
 
-from speech_to_text.speech_to_text_main.speach_to_text_new import init_asr
-from speech_to_text.speech_to_text_main.config import MODEL_DIR
-from speech_to_text.speech_to_text_main.punctuation import init_punctuation
+# from speech_to_text.speech_to_text_main.speach_to_text_new import init_asr
+# from speech_to_text.speech_to_text_main.config import MODEL_DIR
+# from speech_to_text.speech_to_text_main.punctuation import init_punctuation
 
 app = FastAPI(title="Student assessment assistant")
 
-@app.on_event("startup")
-async def load_stt_models():
-    print("Предзагрузка Speech-To-Text моделей...")
-    init_asr(str(MODEL_DIR))
+# @app.on_event("startup")
+# async def load_stt_models():
+#     print("Предзагрузка Speech-To-Text моделей...")
+#     init_asr(str(MODEL_DIR))
 
-    print("Загружается модель пунктуации...")
-    init_punctuation()
+#     print("Загружается модель пунктуации...")
+#     init_punctuation()
 
-    print("Все модели успешно загружены")
+#     print("Все модели успешно загружены")
 
 origins = [
     "http://localhost:3000",

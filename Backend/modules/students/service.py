@@ -133,3 +133,63 @@ async def import_from_file(db: Session, file: UploadFile) -> dict:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Ошибка при импорте: {str(e)}")
     finally:
         await file.close()
+
+async def import_single_group_from_file(db: Session, file: UploadFile, target_group_name: str) -> dict:
+    filename = file.filename.lower()
+    extension = "docx" if filename.endswith('.docx') else "pdf" if filename.endswith('.pdf') else None
+    
+    if not extension:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Разрешены только .docx и .pdf")
+
+    db_group = db.query(Group).filter_by(group_name=target_group_name).first()
+    if not db_group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Группа '{target_group_name}' не зарегистрирована в системе."
+        )
+
+    try:
+        content = await file.read()
+        raw_data = parser_students.parse_students_from_content(extension, content)
+        
+        filtered_students = [
+            item for item in raw_data 
+            if item["group"]["group_name"].strip().lower() == target_group_name.strip().lower()
+        ]
+
+        if not filtered_students:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+                detail=f"В предоставленном файле не найдена группа '{target_group_name}' или в ней нет студентов."
+            )
+
+        result_students = []
+
+        for item in filtered_students:
+            db_student = db.query(models.Student).filter_by(
+                name=item["name"], 
+                id_group=db_group.id_group
+            ).first()
+
+            if not db_student:
+                db_student = models.Student(name=item["name"], id_group=db_group.id_group)
+                db.add(db_student)
+                db.flush()
+
+            db_student.group_rel = db_group
+            result_students.append(db_student)
+
+        db.commit()
+        return {"students": result_students}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Ошибка при импорте группы: {str(e)}"
+        )
+    finally:
+        await file.close()
