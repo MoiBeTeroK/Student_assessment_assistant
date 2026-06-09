@@ -33,14 +33,6 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Гарантируем наличие Django-прав для работы в admin-панели
-        if user.groups.filter(name__in=['admin', 'teacher']).exists():
-            from django.contrib.contenttypes.models import ContentType
-            from django.contrib.auth.models import Permission
-            ct = ContentType.objects.get_for_model(User)
-            perms = Permission.objects.filter(content_type=ct, codename__in=['view_user', 'change_user'])
-            user.user_permissions.add(*perms)
-
         profile, _ = UserProfile.objects.get_or_create(user=user)
 
         if profile.active_jti:
