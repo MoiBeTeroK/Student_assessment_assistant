@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
+from .models import UserProfile
 from .serializers import UserSerializer, CreateUserSerializer, UpdateUserSerializer
 from .permissions import IsAdmin, IsAdminOrSelf, is_admin
 
@@ -31,10 +33,23 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        for token in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        has_active_session = OutstandingToken.objects.filter(
+            user=user,
+            expires_at__gt=timezone.now(),
+        ).exclude(id__in=BlacklistedToken.objects.values('token_id')).exists()
+
+        if has_active_session:
+            return Response(
+                {'detail': 'Вы уже вошли в систему с другого устройства'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         refresh = RefreshToken.for_user(user)
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.active_jti = str(refresh.access_token['jti'])
+        profile.save(update_fields=['active_jti'])
+
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
@@ -50,7 +65,11 @@ class LogoutView(APIView):
         if not refresh:
             return Response({'detail': 'Refresh-токен не передан'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            RefreshToken(refresh).blacklist()
+            token = RefreshToken(refresh)
+            user_id = token.get('user_id')
+            token.blacklist()
+            if user_id:
+                UserProfile.objects.filter(user_id=user_id).update(active_jti='')
         except TokenError:
             pass  # Токен уже истёк или недействителен — всё равно считаем выход успешным
         return Response({'detail': 'Выход выполнен'})

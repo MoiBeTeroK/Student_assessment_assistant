@@ -3,6 +3,8 @@ import os
 import httpx
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 ADMIN_PANEL_URL = os.getenv("ADMIN_PANEL_URL", "http://localhost:8001")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-here")
@@ -77,13 +79,28 @@ async def logout(refresh: str) -> None:
             pass  # Блэклист best-effort: cookie всё равно очистим
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str, db: Session | None = None) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Токен недействителен или истёк",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if db is not None:
+        user_id = payload.get("user_id")
+        if user_id:
+            row = db.execute(
+                text("SELECT active_jti FROM user_profile WHERE user_id = :uid"),
+                {"uid": user_id},
+            ).fetchone()
+            if row is not None and row[0] == '':
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Сессия завершена",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+    return payload

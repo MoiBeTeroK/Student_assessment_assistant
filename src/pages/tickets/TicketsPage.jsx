@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { Check as CheckIcon } from '@mui/icons-material';
 import { Navbar } from '../../shared/ui/Navbar';
 import { TicketCard, AddTicketCard } from '../../features/tickets/ui/TicketCard';
@@ -21,6 +24,8 @@ const btnSx = {
 };
 
 export const TicketsPage = () => {
+    const [exportAnchor, setExportAnchor] = useState(null);
+
     const {
         tickets, questions, disciplineId,
         allQuestionsHaveScore,
@@ -89,7 +94,7 @@ export const TicketsPage = () => {
                             {/* Кнопка экспорта */}
                             <Button
                                 variant="outlined"
-                                onClick={() => exportTickets('docx')}
+                                onClick={(e) => setExportAnchor(e.currentTarget)}
                                 disabled={!disciplineId || tickets.length === 0}
                                 sx={{
                                     ...btnSx,
@@ -98,6 +103,14 @@ export const TicketsPage = () => {
                             >
                                 Экспорт билетов
                             </Button>
+                            <Menu
+                                anchorEl={exportAnchor}
+                                open={Boolean(exportAnchor)}
+                                onClose={() => setExportAnchor(null)}
+                            >
+                                <MenuItem onClick={() => { exportTickets('docx'); setExportAnchor(null); }}>DOCX</MenuItem>
+                                <MenuItem onClick={() => { exportTickets('pdf'); setExportAnchor(null); }}>PDF</MenuItem>
+                            </Menu>
                         </Box>
 
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>

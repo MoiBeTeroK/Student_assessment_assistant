@@ -43,7 +43,7 @@ export const ExamPage = () => {
         recordings, activeRecording, recordingSeconds,
         startRecording, stopRecording,
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
-        saveAnswers, processingStep,
+        startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
         saveFinalResults,
     } = useExam();
@@ -67,7 +67,7 @@ export const ExamPage = () => {
                         ticketNumber={ticketNumber}
                         setTicketNumber={setTicketNumber}
                         ticketQuestions={ticketQuestions}
-                        onStart={() => setScreen('recording')}
+                        onStart={startExam}
                     />
                 )}
 

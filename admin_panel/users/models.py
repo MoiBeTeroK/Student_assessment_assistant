@@ -7,6 +7,7 @@ from django.dispatch import receiver
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     passphrase = models.CharField('Кодовая фраза', max_length=255, blank=True, default='')
+    active_jti = models.CharField('Активный токен JTI', max_length=255, blank=True, default='')
 
     class Meta:
         db_table = 'user_profile'

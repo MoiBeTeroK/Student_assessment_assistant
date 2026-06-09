@@ -116,11 +116,19 @@ export const useQuestions = () => {
         if (!disciplineId) return;
         try {
             const res = await questionsApi.export(disciplineId, format);
+            const cd = res.headers.get('Content-Disposition') ?? '';
+            const rfcMatch = cd.match(/filename\*=UTF-8''(.+)/i);
+            const plainMatch = cd.match(/filename="?([^";\n]+)"?/i);
+            const filename = rfcMatch
+                ? decodeURIComponent(rfcMatch[1])
+                : plainMatch
+                ? plainMatch[1]
+                : `questions.${format}`;
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `questions.${format}`;
+            a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
         } catch (e) {
