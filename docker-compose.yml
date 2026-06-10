@@ -83,6 +83,15 @@ services:
       django_migrations:
         condition: service_completed_successfully
 
+  frontend:
+    build: .
+    container_name: main_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
   dozzle:
     image: amir20/dozzle:latest
     container_name: main_dozzle
