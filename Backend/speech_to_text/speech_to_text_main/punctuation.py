@@ -131,22 +131,8 @@ class PunctuationRestorer:
 
         # Выбираем устройство
         self.device = "cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"
-
-        # ИЗМЕНЕНИЕ: Путь к локальной папке, куда ты заранее скачаешь файлы модели.
-        # Пусть она лежит внутри твоего модуля, например: speech_to_text/models/punctuation_model
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        local_model_path = os.path.join(current_dir, "models", "punctuation_model")
         
-        # Если локальной папки нет, оставляем дефолтное имя для совместимости,
-        # но для работы в автономном Докере папка обязательна!
-        if os.path.exists(local_model_path):
-            target_model = local_model_path
-            print(f" [Punctuation] Загрузка весов строго из локальной директории: {target_model}")
-        else:
-            target_model = "oliverguhr/fullstop-punctuation-multilang-large"
-            print(f" ⚠ [Punctuation] Локальная папка не найдена. Откат на интернет-репозиторий: {target_model}")
-
-        self._model = PunctuationModel(model=target_model)
+        self._model = PunctuationModel()
         print(" ✓ [Punctuation] Модель пунктуации успешно загружена.")
 
     def restore(self, text: str) -> str:
@@ -165,25 +151,21 @@ class PunctuationRestorer:
         if not segments:
             return []
 
-        texts = [seg.get("text", "").strip() for seg in segments if seg.get("text")]
-        
-        if not texts:
-            return segments
-
-        full_text = " ".join(texts)
-        
-        try:
-            restored_full = self._model.restore_punctuation(full_text)
-            processed_full = _post_process(restored_full)
-            for seg in segments:
-                if seg.get("text"):
-                    seg["text"] = self.restore(seg["text"])
-                    
-            return segments
+        # Проходим по каждому сегменту ОДИН раз
+        for seg in segments:
+            original_text = seg.get("text")
             
-        except Exception as e:
-            logger.error(f"Критическая ошибка в restore_segments: {e}")
-            return segments
+            if original_text and original_text.strip():
+                # Модель вызывается строго по одному разу на сегмент
+                try:
+                    restored = self._model.restore_punctuation(original_text.strip())
+                    seg["text"] = _post_process(restored)
+                except Exception as segment_error:
+                    logger.warning(f"Не удалось обработать сегмент: {segment_error}")
+                    # В случае локального сбоя оставляем оригинальный текст, чтобы не рушить весь массив
+                    seg["text"] = original_text
+
+        return segments
 
 
 def _post_process(text: str) -> str:
