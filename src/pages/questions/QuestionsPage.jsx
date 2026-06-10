@@ -41,7 +41,7 @@ export const QuestionsPage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/questions" />
 
-            <Box sx={{ px: 4, py: 15 }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 15 } }}>
                 {!disciplineId ? (
                     <Box sx={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',

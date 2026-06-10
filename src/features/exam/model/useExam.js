@@ -200,20 +200,14 @@ export const useExam = () => {
             const result = await resultsApi.calculate(examResultId);
             setRecommendedGrade(result.rec_grade);
             setScreen('results');
-        } catch (e) {
-            alert(e.message || 'Ошибка при подсчёте оценки');
-            setScreen('recording');
-        }
-    };
 
-    const generateComment = async () => {
-        if (!examResultId) return;
-        setGeneratingComment(true);
-        try {
+            setGeneratingComment(true);
+            setProcessingStep('Генерация комментария...');
             const { text } = await gigachatApi.generateComment(examResultId);
             setGradeComment(text);
         } catch (e) {
-            alert(e.message || 'Ошибка генерации комментария');
+            alert(e.message || 'Ошибка при подсчёте оценки');
+            setScreen('recording');
         } finally {
             setGeneratingComment(false);
         }
@@ -250,7 +244,7 @@ export const useExam = () => {
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
-        generateComment, generatingComment,
+        generatingComment,
         saveFinalResults, examResultId,
     };
 };

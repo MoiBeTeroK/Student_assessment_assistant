@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import TextField from '@mui/material/TextField';
 
+
 const textSx = { fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED' };
 
 const inputSx = {
@@ -17,7 +18,7 @@ const inputSx = {
     '&:hover': { borderColor: '#5E83AE' },
 };
 
-export const ExamResults = ({ recommendedGrade, gradeComment, finalGrade, setFinalGrade, onSave, onGenerateComment, generatingComment }) => {
+export const ExamResults = ({ recommendedGrade, gradeComment, finalGrade, setFinalGrade, onSave, generatingComment }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 700 }}>
             <Box>
@@ -26,32 +27,16 @@ export const ExamResults = ({ recommendedGrade, gradeComment, finalGrade, setFin
             </Box>
 
             <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
-                    <Box sx={{ ...textSx, fontSize: '1.2rem' }}>Комментарий к рекомендуемой оценке:</Box>
-                    <Button
-                        variant="outlined"
-                        onClick={onGenerateComment}
-                        disabled={generatingComment}
-                        size="small"
-                        sx={{
-                            fontFamily: '"Montserrat", sans-serif',
-                            textTransform: 'none',
-                            color: '#F9F5ED',
-                            borderColor: 'rgba(249,245,237,0.6)',
-                            borderRadius: '20px',
-                            fontSize: '0.9rem',
-                            px: 2,
-                            '&:hover': { borderColor: '#F9F5ED', backgroundColor: 'rgba(249,245,237,0.1)' },
-                            '&.Mui-disabled': { color: 'rgba(249,245,237,0.3)', borderColor: 'rgba(249,245,237,0.2)' },
-                        }}
-                        startIcon={generatingComment ? <CircularProgress size={14} sx={{ color: '#F9F5ED' }} /> : null}
-                    >
-                        {generatingComment ? 'Генерирую...' : 'Получить комментарий'}
-                    </Button>
-                </Box>
-                {gradeComment && (
-                    <Box sx={{ ...textSx, fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{gradeComment}</Box>
-                )}
+                <Box sx={{ ...textSx, fontSize: '1.2rem', mb: 0.5 }}>Комментарий к рекомендуемой оценке:</Box>
+                {generatingComment
+                    ? <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CircularProgress size={16} sx={{ color: '#F9F5ED' }} />
+                        <Box sx={{ ...textSx, fontSize: '1rem' }}>Генерирую...</Box>
+                      </Box>
+                    : gradeComment && (
+                        <Box sx={{ ...textSx, fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{gradeComment}</Box>
+                    )
+                }
             </Box>
 
             <Box>

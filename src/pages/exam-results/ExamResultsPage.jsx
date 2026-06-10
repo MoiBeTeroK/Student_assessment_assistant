@@ -10,6 +10,7 @@ const cellSx = {
     fontSize: '1rem',
     px: 2,
     py: 1,
+    textAlign: 'center',
     borderBottom: '1px solid rgba(249,245,237,0.2)',
 };
 
@@ -29,7 +30,7 @@ export const ExamResultsPage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/exam-results" />
 
-            <Box sx={{ px: 4, py: 15 }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 15 } }}>
                 <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box sx={{ fontFamily: '"Montserrat", sans-serif', color: '#F9F5ED', fontSize: '1.2rem' }}>
                         Год:
@@ -69,7 +70,8 @@ export const ExamResultsPage = () => {
                     </Box>
                 ) : (
                     <Box>
-                        <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <Box sx={{ overflowX: 'auto' }}>
+                        <Box component="table" sx={{ width: '100%', minWidth: 500, borderCollapse: 'collapse' }}>
                             <Box component="thead">
                                 <Box component="tr">
                                     {COLS.map((col) => (
@@ -82,12 +84,13 @@ export const ExamResultsPage = () => {
                                     <Box component="tr" key={r.id_result}>
                                         <Box component="td" sx={cellSx}>{r.name}</Box>
                                         <Box component="td" sx={cellSx}>{r.group}</Box>
-                                        <Box component="td" sx={{ ...cellSx, textAlign: 'center' }}>{r.rec_grade}</Box>
-                                        <Box component="td" sx={{ ...cellSx, textAlign: 'center' }}>{r.final_grade}</Box>
+                                        <Box component="td" sx={cellSx}>{r.rec_grade}</Box>
+                                        <Box component="td" sx={cellSx}>{r.final_grade}</Box>
                                         <Box component="td" sx={cellSx}>{r.date}</Box>
                                     </Box>
                                 ))}
                             </Box>
+                        </Box>
                         </Box>
 
                         <Box sx={{

@@ -45,7 +45,7 @@ export const ExamPage = () => {
         rerecordModal, passphrase, setPassphrase, openRerecord, confirmRerecord, setRerecordModal,
         startExam, saveAnswers, processingStep,
         recommendedGrade, gradeComment, finalGrade, setFinalGrade,
-        generateComment, generatingComment,
+        generatingComment,
         saveFinalResults,
     } = useExam();
 
@@ -55,7 +55,7 @@ export const ExamPage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/exam" />
 
-            <Box sx={{ px: 4, py: 15 }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 15 } }}>
                 {(screen === 'setup') && (
                     <ExamSetup
                         groups={groups}
@@ -95,7 +95,6 @@ export const ExamPage = () => {
                         finalGrade={finalGrade}
                         setFinalGrade={setFinalGrade}
                         onSave={saveFinalResults}
-                        onGenerateComment={generateComment}
                         generatingComment={generatingComment}
                     />
                 )}

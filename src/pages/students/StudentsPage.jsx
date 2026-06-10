@@ -26,9 +26,9 @@ export const StudentsPage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/students" />
 
-            <Box sx={{ px: 4, py: 15 }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 15 } }}>
                 {!selectedGroup ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: { xs: 'center', md: 'flex-start' } }}>
                         <AddGroupCard
                             isAdding={isAdding}
                             value={newGroupName}

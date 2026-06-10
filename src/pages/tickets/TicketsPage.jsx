@@ -41,7 +41,7 @@ export const TicketsPage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#5E83AE' }}>
             <Navbar activePath="/tickets" />
 
-            <Box sx={{ px: 4, py: 15 }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 10, md: 15 } }}>
                 {questionSelectOpen ? (
                     <QuestionSelectScreen
                         questions={questions}
@@ -124,7 +124,7 @@ export const TicketsPage = () => {
                             </Box>
                         )}
 
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: { xs: 'center', md: 'flex-start' } }}>
                             <AddTicketCard onClick={openCreate} disabled={!allQuestionsHaveAnswers} />
                             {[...tickets].sort((a, b) => a.test_number - b.test_number).map((t) => (
                                 <TicketCard
