@@ -13,10 +13,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: apiTarget,
           changeOrigin: true,
+          timeout: 120000,
+          proxyTimeout: 120000,
         },
         '/storage': {
           target: apiTarget,
           changeOrigin: true,
+          timeout: 120000,
+          proxyTimeout: 120000,
         },
       },
     },

@@ -3,6 +3,7 @@ import { storage } from '../../../shared/lib/storage';
 import { questionsApi } from '../../../shared/api/questionsApi';
 
 const getActiveDisciplineId = () => storage.get('settings_admin')?.activeDisciplineId ?? null;
+const sortById = (arr) => [...arr].sort((a, b) => (a.id_question ?? 0) - (b.id_question ?? 0));
 
 export const useQuestions = () => {
     const [questions, setQuestions] = useState([]);
@@ -17,7 +18,7 @@ export const useQuestions = () => {
     useEffect(() => {
         if (!disciplineId) return;
         questionsApi.getByDiscipline(disciplineId)
-            .then((data) => setQuestions(data))
+            .then((data) => setQuestions(sortById(data)))
             .catch(() => {});
     }, [disciplineId]);
 
@@ -31,7 +32,7 @@ export const useQuestions = () => {
                 complexity_score: complexity_score || null,
                 standard_answer: standard_answer || null,
             }]);
-            setQuestions((prev) => [...prev, ...created]);
+            setQuestions((prev) => sortById([...prev, ...created]));
             setAddModalOpen(false);
         } catch (e) {
             alert(e.message);
@@ -55,7 +56,7 @@ export const useQuestions = () => {
                 standard_answer: standard_answer || null,
             }]);
             setQuestions((prev) =>
-                prev.map((q) => q.id_question === editingQuestion.id_question ? updated[0] : q)
+                sortById(prev.map((q) => q.id_question === editingQuestion.id_question ? updated[0] : q))
             );
             setEditModalOpen(false);
             setEditingQuestion(null);
@@ -92,7 +93,7 @@ export const useQuestions = () => {
         try {
             const payload = pendingQuestions.map(({ _tempId, ...q }) => q);
             const created = await questionsApi.batch(payload);
-            setQuestions((prev) => [...prev, ...created]);
+            setQuestions((prev) => sortById([...prev, ...created]));
             setPendingQuestions([]);
         } catch (e) {
             alert(e.message);
