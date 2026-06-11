@@ -1,0 +1,265 @@
+{
+  "total_cases": 15,
+  "averages": {
+    "Достоверность": 0.553,
+    "Полезность": 0.593,
+    "Соответствие оценке": 0.5
+  },
+  "cases": [
+    {
+      "meta": {
+        "result_id": 1,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 4
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.5
+      },
+      "reasons": {
+        "Достоверность": "Студент в основном корректно перечисляет способы хранения ресурсов в Android-приложении, включая основные элементы структуры папки res и назначение SharedPreferences, внутреннего хранилища и SQLite. Однако отсутствуют важные детали, такие как необходимость объявлять разрешения для внешнего хранилища, роль класса R и подкаталог mipmap.",
+        "Полезность": "The comment provides a detailed breakdown of the student's answer, highlighting both their strengths (correct identification of storage mechanisms like res directory structure, SharedPreferences, internal storage, and SQLite) and weaknesses (omission of external storage, class R generation by AAPT, and missing mipmap subdirectory). It also offers constructive suggestions for improvement while mentioning specific areas that need attention.",
+        "Соответствие оценке": "The response provides a reasonable assessment of the student's knowledge, highlighting both their strengths (correct identification of storage mechanisms like res directory, SharedPreferences, internal storage, and SQLite) and areas needing improvement (omission of external storage, class R role, and mipmap subdirectory). However, it does not fully align with the recommended score of 4 due to its slightly positive tone despite noting significant omissions."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 2,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 3
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.4
+      },
+      "reasons": {
+        "Достоверность": "Студент верно описывает основные функции фрагментов, включая модульность интерфейса, адаптацию под различные устройства и использование стека переходов. Однако отсутствует информация о жизненном цикле фрагмента и передаче аргументов через Bundle, что снижает общую оценку.",
+        "Полезность": "The comment provides a reasonable breakdown of the student's understanding but lacks depth regarding fragment lifecycle and argument passing through Bundle. It correctly identifies the purpose of fragments and their use cases, but fails to address critical aspects like lifecycle differences and bundle usage.",
+        "Соответствие оценке": "The response provides a reasonable explanation of fragment usage and highlights both strengths (correct understanding of fragment modularity and adaptability) and minor weaknesses (omission of lifecycle differences and bundle argument transmission). The tone matches the recommended score of 3."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 3,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 5
+      },
+      "scores": {
+        "Достоверность": 0.8,
+        "Полезность": 0.8,
+        "Соответствие оценке": 0.8
+      },
+      "reasons": {
+        "Достоверность": "The output accurately reflects the provided context by mentioning all key elements such as architecture levels, Dalvik VM, DEX format, JIT and ART compilation methods, and their practical implications. However, it lacks detailed discussion of hybrid JIT-AOT model introduced in Android 7.0 Nougat and support for 64-bit architectures.",
+        "Полезность": "The comment provides detailed analysis of the student's answer, highlighting both its strengths (correct description of architecture levels and explanations of JIT vs AOT) and weaknesses (omission of hybrid JIT+AOT model and lack of mention about 64-bit support). It also offers constructive recommendations for improvement by suggesting inclusion of these aspects. However, it could be more explicit regarding the order of architectural layers.",
+        "Соответствие оценке": "The response accurately reflects the recommended assessment of 5 by providing detailed and correct information about the architecture and evolution of Android virtual machines. It highlights significant aspects such as Dalvik, DEX, JIT, ART, and their practical implications. Although it misses mentioning hybrid JIT/AOT model and support for 64-bit architectures, these omissions do not significantly detract from its overall quality and depth."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 4,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 2
+      },
+      "scores": {
+        "Достоверность": 0.6,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.4
+      },
+      "reasons": {
+        "Достоверность": "The output provides some insights into the student's understanding of Android app development principles but lacks detailed specificity regarding different types of applications and their unique requirements. It also does not strictly adhere to the context provided, which focuses solely on following Google recommendations and organizing code.",
+        "Полезность": "The comment provides a reasonable breakdown of strengths and weaknesses, mentioning specific areas where the student excelled (understanding general principles and architectural patterns), as well as noting areas needing improvement (specificity regarding different types of Android applications). However, it lacks detailed analysis of how the actual output deviates from the expected one and does not provide concrete recommendations for improvement.",
+        "Соответствие оценке": "The comment provides both strengths (demonstrated understanding of development principles and architectural patterns) and minor weaknesses (lack of detail regarding specific app types), aligning with an evaluation range of 4–5. The recommendation to improve specificity is constructive but does not significantly detract from the overall positive assessment."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 5,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 4
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.6,
+        "Соответствие оценке": 0.8
+      },
+      "reasons": {
+        "Достоверность": "The response accurately reflects the content of the context by listing the four main components of Android applications (Activity, Service, Broadcast Receiver, Content Provider). However, it lacks detailed explanations about their interactions and does not fully cover all aspects as mentioned in the context.",
+        "Полезность": "The comment provides some detailed observations about the student's answer, noting areas where more information could be included and aspects that were not fully developed. However, it lacks specific recommendations for improvement beyond general suggestions and does not explicitly highlight the student's understanding of the material as strongly as expected.",
+        "Соответствие оценке": "The response accurately reflects the recommended score of 4 by noting both the student's strengths (correct identification of components and understanding their purpose) and areas for improvement (lack of detail and incomplete coverage). The critique is constructive and balanced."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 6,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 3
+      },
+      "scores": {
+        "Достоверность": 0.5,
+        "Полезность": 0.6,
+        "Соответствие оценке": 0.4
+      },
+      "reasons": {
+        "Достоверность": "Ответ частично охватывает основные элементы манифеста и описывает назначение файла R.java, однако отсутствует важная информация о фильтрах намерений, атрибутах компонентов и механизме работы инструмента AAPT.",
+        "Полезность": "The comment provides some detailed analysis of the student's answer, highlighting missing elements such as intent-filters, component attributes, and the generation mechanism of R.java. However, it lacks a structured breakdown of what parts of the answer were correct and which needed improvement, and does not explicitly recommend improvements based on identified gaps.",
+        "Соответствие оценке": "The response provides a reasonable assessment of the student's answer, highlighting both strengths (correct identification of components and their roles) and areas needing improvement (omission of important elements like intent-filters, permissions, and R.java generation). The tone matches the recommended score of 3, which indicates that while the answer is satisfactory, it lacks depth."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 7,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 5
+      },
+      "scores": {
+        "Достоверность": 0.3,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.7
+      },
+      "reasons": {
+        "Достоверность": "The output demonstrates some understanding of activity lifecycle methods but contains significant errors regarding their order and omits important aspects like startActivityForResult and onActivityResult. It also fails to mention critical elements such as the role of onPause versus onStop.",
+        "Полезность": "The comment provides a detailed analysis of the student's errors regarding the order of lifecycle methods and mentions specific recommendations to improve understanding. It also highlights the correct description of explicit and implicit intents and data transmission through extras, which shows some comprehension of the material. However, it lacks a structured breakdown of strengths and weaknesses and does not explicitly mention the missing part about startActivityForResult and onActivityResult.",
+        "Соответствие оценке": "The response provides a detailed analysis of the student's errors regarding the lifecycle methods and correctly identifies the conceptual mistake about the order of onPause and onStop. It also highlights missed aspects like startActivityForResult and onActivityResult. However, it could be more comprehensive by mentioning these missing elements explicitly."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 8,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 2
+      },
+      "scores": {
+        "Достоверность": 0.2,
+        "Полезность": 0.2,
+        "Соответствие оценке": 0.2
+      },
+      "reasons": {
+        "Достоверность": "Ответ частично затрагивает тему, указывая на современное использование Jetpack Compose для создания интерфейсов, однако не раскрывает ключевые особенности и изменения подходов к разработке приложений, указанные в задании.",
+        "Полезность": "The actual output provides a minimal acknowledgment of Jetpack Compose as a modern tool but lacks detailed explanations about its core concepts such as declarative approach, recomposition, state management, and integration with Kotlin code. It also does not offer recommendations for improvement beyond mentioning general awareness of the framework.",
+        "Соответствие оценке": "The response accurately reflects the recommended score of 2 by noting significant gaps in student's knowledge and understanding of Jetpack Compose. However, it lacks depth in identifying specific areas where the student failed to meet expectations, which would have allowed for a more detailed assessment."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 9,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 4
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.7
+      },
+      "reasons": {
+        "Достоверность": "The response accurately defines the role of ContentProvider and correctly lists types of services, but lacks detailed explanations about structure of URIs used by ContentProvider, methods like query/insert/update/delete, and interprocess communication via AIDL in Bound Services.",
+        "Полезность": "The comment provides a detailed analysis of the student's answer, highlighting both strengths and areas needing improvement. It mentions specific errors such as lack of structure in URI usage and missing methods of ContentProvider, while also recognizing the correct identification of ContentProvider role and distinction among service types. However, it could be more comprehensive by including additional details about ContentResolver and AIDL.",
+        "Соответствие оценке": "The response provides a good overview of ContentProvider and service types, aligning well with the recommended score of 4. However, it lacks detailed explanations about important aspects such as structure of URI used by ContentProvider, methods provided by ContentProvider, and role of ContentResolver. Additionally, there is no mention of AIDL and its use in Bound Services."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 10,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 5
+      },
+      "scores": {
+        "Достоверность": 0.3,
+        "Полезность": 0.3,
+        "Соответствие оценке": 0.2
+      },
+      "reasons": {
+        "Достоверность": "Ответ недостаточно подробный и структурированный, отсутствуют важные детали (например, LocalBroadcastManager и необходимость защиты через permission). Хотя указаны основные способы регистрации и типы широковещательных сообщений, отсутствует глубокое понимание темы и причинно-следственных связей.",
+        "Полезность": "The comment provides some insights into the student's weaknesses but lacks detailed analysis of specific errors and recommendations for improvement. It mentions that the answer is superficial and misses important aspects like security measures (LocalBroadcastManager and permissions), which indicates a lack of depth. However, it does acknowledge the student’s basic familiarity with the concept.",
+        "Соответствие оценке": "Оценка 5 указана, однако реальный отзыв критикует существенный недостаток знаний студента, отмечая отсутствие глубокого понимания и упущение важных аспектов безопасности. Хотя отмечены слабые места, положительные моменты представлены недостаточно подробно."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 11,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 3
+      },
+      "scores": {
+        "Достоверность": 0.5,
+        "Полезность": 0.6,
+        "Соответствие оценке": 0.6
+      },
+      "reasons": {
+        "Достоверность": "Ответ частично соответствует предоставленному контексту, правильно указывая ключевые моменты эволюции исполнительной среды Android (Dalvik-JIT и ART-AOT), однако пропуск ключевых деталей (ART в тестовом режиме в Android 4.4 KitKat, гибридная модель JIT+AOT в Android 7.0 Nougat, улучшение сборщика мусора в ART) снижает общую точность и полноту изложенной информации.",
+        "Полезность": "The comment provides a reasonable breakdown of the student's answer, highlighting missing information about ART introduction, hybrid model, and garbage collector improvements. It also mentions specific areas where the answer is incomplete but does not provide detailed recommendations for improvement beyond mentioning what was omitted.",
+        "Соответствие оценке": "The response provides a generally accurate overview of the evolution of Android's execution environment and its impact on app performance. It correctly identifies key milestones such as Dalvik/JIT and ART/AOT transitions, but lacks depth in explaining important aspects like ART's introduction in Android 4.4 KitKat, hybrid JIT+AOT model in Android 7.0 Nougat, and improvements to garbage collection in ART. Despite these omissions, it demonstrates understanding of the topic and aligns well with the recommended score."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 12,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 2
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.4
+      },
+      "reasons": {
+        "Достоверность": "Студент правильно указал основной инструмент сборки Android-проектов — Gradle, упомянул build variants и product flavors, а также разницу между Groovy DSL и Kotlin DSL. Однако отсутствует информация о структуре build.gradle-файлов и жизненном цикле сборки Maven, что снижает общую оценку.",
+        "Полезность": "The comment provides a reasonable breakdown of the student's strengths and weaknesses. It correctly identifies that the student named the main tool (Gradle) and described basic concepts like build variants and product flavors. However, it lacks detailed explanations about file structure, Maven lifecycle, and other important aspects of automated builds. The critique is constructive but could be more comprehensive.",
+        "Соответствие оценке": "The comment provides both strengths and minor weaknesses, noting that the student correctly identified the main assembly tool and demonstrated familiarity with basic automation concepts. However, it also highlights gaps in coverage of file structure and Maven lifecycle, which detract slightly from the overall assessment."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 13,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 4
+      },
+      "scores": {
+        "Достоверность": 0.7,
+        "Полезность": 0.7,
+        "Соответствие оценке": 0.8
+      },
+      "reasons": {
+        "Достоверность": "The output accurately reflects the context by highlighting the benefits of Jetpack Compose such as declarative nature, recomposition mechanism, and testing advantages. However, it overlooks important aspects like performance implications of deeply nested view hierarchies and the higher learning curve associated with Compose.",
+        "Полезность": "The comment provides a detailed analysis of the student's answer, highlighting both strengths (correct description of recomposition and testing advantages) and weaknesses (omission of performance issues related to deep view hierarchies). However, it could be more structured by explicitly mentioning how these points relate directly back to the evaluation criteria.",
+        "Соответствие оценке": "The response accurately reflects the recommended score of 4 by highlighting both the strengths (correct description of recomposition, testing advantages) and minor weaknesses (omission of performance issues and learning curve). However, it could be stronger if it addressed the missing aspects more explicitly."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 14,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 3
+      },
+      "scores": {
+        "Достоверность": 0.6,
+        "Полезность": 0.6,
+        "Соответствие оценке": 0.4
+      },
+      "reasons": {
+        "Достоверность": "The response accurately reflects the provided context by mentioning all stages of the Fragment lifecycle but lacks depth in explaining differences compared to Activity's lifecycle. It also contains minor inaccuracies such as implying that Fragment exists after View destruction which is not entirely correct.",
+        "Полезность": "The comment provides some detailed analysis of the student's answer, highlighting both weaknesses such as missing important aspects and inaccuracies, and strengths like understanding of basic methods. However, it lacks a structured breakdown of which parts of the answer meet expectations and which do not, and does not provide concrete recommendations for improvement.",
+        "Соответствие оценке": "The response provides a balanced assessment, highlighting both the student's knowledge of Fragment lifecycle methods and their limitations. The numerical recommendation aligns well with the comment tone, which indicates satisfactory understanding but also points out areas needing improvement."
+      }
+    },
+    {
+      "meta": {
+        "result_id": 15,
+        "discipline": "Программирование для мобильных платформ",
+        "rec_grade": 5
+      },
+      "scores": {
+        "Достоверность": 0.3,
+        "Полезность": 0.3,
+        "Соответствие оценке": 0.2
+      },
+      "reasons": {
+        "Достоверность": "Хотя студент упомянул основные способы получения контекста через привязанную активность и реквайерконтекст, ответ остается поверхностным и не раскрывает важные нюансы, такие как причины, почему Fragment не является Context, и последствия неправильного хранения контекста.",
+        "Полезность": "The comment provides some insights into the student's weaknesses but lacks detailed explanations of errors and missed points. It also does not offer concrete recommendations for improvement beyond general suggestions. The strengths mentioned are vague and do not highlight specific aspects of understanding.",
+        "Соответствие оценке": "The student's answer is characterized by significant gaps in understanding, as it merely lists methods without explaining their relevance to the distinction between Fragment and Context. Additionally, there is no discussion of memory leak scenarios, which indicates limited depth of knowledge. Despite some basic awareness that Fragment does not equate to Context and that context can be obtained through Activity, the overall response lacks coherence and fails to meet the expected level of detail."
+      }
+    }
+  ]
+}
