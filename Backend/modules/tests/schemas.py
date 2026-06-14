@@ -12,12 +12,14 @@ class TestUpdate(BaseModel):
     test_number: Optional[int] = None
     id_discipline: Optional[int] = None
     question_ids: Optional[List[int]] = None
+    is_archive: Optional[bool] = None
     
 class QuestionShortOut(BaseModel):
     id_question: int
     question_content: str 
     standard_answer: Optional[str] = None
     complexity_score: Optional[float] = None
+    is_archive: bool
 
     class Config:
         from_attributes = True
@@ -32,6 +34,7 @@ class TestOut(BaseModel):
     id_test: int
     test_number: int
     id_discipline: int
+    is_archive: bool
     questions: List[QuestionShortOut] = [] 
 
     class Config:

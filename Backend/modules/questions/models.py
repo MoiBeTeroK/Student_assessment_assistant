@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, ForeignKey, Numeric, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -11,6 +11,8 @@ class Question(Base):
     question_content = Column(String, nullable=False)
 
     complexity_score = Column(Numeric(precision=2, scale=1), nullable=True)
+
+    is_archive = Column(Boolean, default=False, nullable=False)
 
     discipline = relationship("modules.disciplines.models.Discipline", back_populates="questions")
     audios = relationship("modules.storage.models.Audio", back_populates="question")

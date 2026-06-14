@@ -20,10 +20,10 @@ def read_groups(db: Session = Depends(get_db)):
 def read_group(group_id: int, db: Session = Depends(get_db)):
     return service.get_group_by_id(db, group_id)
 
-@router.put("/{group_id}", response_model=schemas.GroupOut, summary="Обновить данные группы")
-def update_group(group_id: int, group_data: schemas.GroupUpdate, db: Session = Depends(get_db)):
+@router.patch("/{group_id}", response_model=schemas.GroupOut, summary="Обновить данные группы")
+def patch_group(group_id: int, group_data: schemas.GroupUpdate, db: Session = Depends(get_db)):
     return service.update_group(db, group_id, group_data)
 
-@router.delete("/{group_id}", summary="Удалить группу")
+@router.delete("/{group_id}", status_code=status.HTTP_200_OK, summary="Удалить группу")
 def delete_group(group_id: int, db: Session = Depends(get_db)):
     return service.delete_group(db, group_id)

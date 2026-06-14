@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Table, Column, Integer, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -13,6 +13,7 @@ class Test(Base):
     __tablename__ = "tests"
     id_test = Column(Integer, primary_key=True, index=True)
     test_number = Column(Integer, nullable=False)
+    is_archive = Column(Boolean, default=False, nullable=False)
     
     # FK указывает на имя таблицы 'disciplines' и колонку 'id_discipline'
     id_discipline = Column(Integer, ForeignKey("disciplines.id_discipline", ondelete="CASCADE"), nullable=False)

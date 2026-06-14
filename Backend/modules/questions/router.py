@@ -22,7 +22,7 @@ def get_all_questions(db: Session = Depends(get_db)):
 def get_questions_by_discipline(discipline_id: int, db: Session = Depends(get_db)):
     return service.get_questions_by_discipline(db, discipline_id)
 
-@router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить вопрос по ID")
+@router.delete("/{question_id}", status_code=status.HTTP_200_OK, summary="Удалить вопрос по ID")
 def delete_question(question_id: int, db: Session = Depends(get_db)):
     return service.delete_question(db, question_id)
 

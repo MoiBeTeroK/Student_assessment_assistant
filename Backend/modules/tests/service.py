@@ -8,13 +8,14 @@ from enum import Enum
 from . import models, schemas, generator, exporter
 from modules.disciplines.models import Discipline
 from modules.questions.models import Question
+from modules.results.models import ExamResult
 
 class ExportFormat(str, Enum):
     docx = "docx"
     pdf = "pdf"
 
 def get_all_tests(db: Session) -> List[models.Test]:
-    return db.query(models.Test).options(joinedload(models.Test.questions)).all()
+    return db.query(models.Test).options(joinedload(models.Test.questions)).filter(models.Test.is_archive == False).all()
 
 def get_tests_by_discipline(db: Session, discipline_id: int) -> List[models.Test]:
     discipline_exists = db.query(Discipline).filter(Discipline.id_discipline == discipline_id).first()
@@ -23,10 +24,13 @@ def get_tests_by_discipline(db: Session, discipline_id: int) -> List[models.Test
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Дисциплина с ID {discipline_id} не найдена"
         )
+    # Возвращаем только активные билеты конкретной дисциплины
     return db.query(models.Test)\
         .options(joinedload(models.Test.questions))\
-        .filter(models.Test.id_discipline == discipline_id)\
-        .all()
+        .filter(
+            models.Test.id_discipline == discipline_id,
+            models.Test.is_archive == False
+        ).all()
 
 def create_test(db: Session, test_data: schemas.TestCreate) -> models.Test:
     discipline = db.query(Discipline).filter(
@@ -42,15 +46,26 @@ def create_test(db: Session, test_data: schemas.TestCreate) -> models.Test:
     ).first()
 
     if existing_test:
+        # Если билет существовал, но был отправлен в архив, то можно его "реанимировать" с новыми данными
+        if existing_test.is_archive:
+            existing_test.is_archive = False
+            if test_data.question_ids:
+                questions = db.query(Question).filter(Question.id_question.in_(test_data.question_ids)).all()
+                existing_test.questions = questions
+            db.commit()
+            db.refresh(existing_test)
+            return existing_test
+        
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"В дисциплине '{discipline.name_discipline}' уже существует билет №{test_data.test_number}."
+            detail=f"В дисциплине '{discipline.name_discipline}' уже существует активный билет №{test_data.test_number}."
         )
 
     try:
         new_test = models.Test(
             test_number=test_data.test_number,
-            id_discipline=test_data.id_discipline
+            id_discipline=test_data.id_discipline,
+            is_archive=False
         )
 
         if test_data.question_ids:
@@ -61,7 +76,7 @@ def create_test(db: Session, test_data: schemas.TestCreate) -> models.Test:
             
             for q in questions:
                 if q.id_discipline != test_data.id_discipline:
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Вопрос ID {q.id_question} из другой дисциплины")
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Вопрос из другой дисциплины")
 
             new_test.questions = questions
 
@@ -91,6 +106,9 @@ def update_test(db: Session, test_id: int, test_data: schemas.TestUpdate) -> mod
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Новая дисциплина не найдена")
             test.id_discipline = test_data.id_discipline
 
+        if test_data.is_archive is not None:
+            test.is_archive = test_data.is_archive
+
         if test_data.question_ids is not None:
             new_questions = db.query(Question).filter(Question.id_question.in_(test_data.question_ids)).all()
 
@@ -113,27 +131,51 @@ def update_test(db: Session, test_id: int, test_data: schemas.TestUpdate) -> mod
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Ошибка при обновлении: {str(e)}")
 
-def delete_test(db: Session, test_id: int) -> None:
+def delete_test(db: Session, test_id: int) -> dict:
     test = db.query(models.Test).filter(models.Test.id_test == test_id).first()
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Билет с ID {test_id} не найден.")
 
+    # Проверяем связь билета с таблицей результатов экзаменов
+    has_exam_results = db.query(ExamResult).filter(ExamResult.id_test == test_id).first() is not None
+
     try:
-        db.delete(test)
-        db.commit()
-        return None
-    except Exception:
+        if has_exam_results:
+            # Экзамен по этому билету уже сдавался - мягкое удаление (в архив)
+            test.is_archive = True
+            db.commit()
+            return {
+                "status": "archived",
+                "message": f"Билет связан с результатами экзаменов студентов. Он успешно перемещен в архив."
+            }
+        else:
+            # Экзаменов нет - полное физическое удаление из базы данных
+            db.delete(test)
+            db.commit()
+            return {
+                "status": "deleted",
+                "message": f"Билет не содержит результатов и успешно полностью удален из базы."
+            }
+    except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Не удалось удалить билет.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Не удалось обработать удаление билета: {str(e)}"
+        )
 
 def confirm_generated_tests(db: Session, request: schemas.TestGenerateRequest) -> List[models.Test]:
     discipline = db.query(Discipline).filter(Discipline.id_discipline == request.id_discipline).first()
     if not discipline:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Дисциплина не найдена")
 
-    questions_db = db.query(Question).filter(Question.id_discipline == request.id_discipline).all()
+    # Для генерации билетов берем только активные (не архивные) вопросы
+    questions_db = db.query(Question).filter(
+        Question.id_discipline == request.id_discipline,
+        Question.is_archive == False
+    ).all()
+    
     if len(questions_db) < request.questions_per_test:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно вопросов")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно активных вопросов в базе")
 
     try:
         generated_data = generator.generate_balanced_tests(
@@ -142,8 +184,10 @@ def confirm_generated_tests(db: Session, request: schemas.TestGenerateRequest) -
             questions_per_test=request.questions_per_test
         )
 
+        # Выбираем занятые номера только среди активных билетов
         occupied_numbers = db.query(models.Test.test_number).filter(
-            models.Test.id_discipline == request.id_discipline
+            models.Test.id_discipline == request.id_discipline,
+            models.Test.is_archive == False
         ).all()
         occupied_set = {n[0] for n in occupied_numbers}
 
@@ -158,7 +202,8 @@ def confirm_generated_tests(db: Session, request: schemas.TestGenerateRequest) -
         for i, item in enumerate(generated_data):
             new_test = models.Test(
                 test_number=available_numbers[i],
-                id_discipline=request.id_discipline
+                id_discipline=request.id_discipline,
+                is_archive=False
             )
             for q_obj in item["questions"]:
                 new_test.questions.append(q_obj)
@@ -180,12 +225,16 @@ def export_tests_combined(db: Session, discipline_id: int, format: ExportFormat)
     if not discipline:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Дисциплина не найдена")
 
+    # Экспортируем только активные билеты
     tests = db.query(models.Test).options(joinedload(models.Test.questions))\
-        .filter(models.Test.id_discipline == discipline_id)\
+        .filter(
+            models.Test.id_discipline == discipline_id,
+            models.Test.is_archive == False
+        )\
         .order_by(models.Test.test_number).all()
 
     if not tests:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Билеты не найдены")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Активные билеты не найдены для экспорта")
 
     export_config = {
         ExportFormat.docx: {

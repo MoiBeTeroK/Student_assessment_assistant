@@ -11,10 +11,12 @@ class StudentCreate(StudentBase):
 class StudentUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     id_group: Optional[int] = Field(None)
+    is_archive: Optional[bool] = Field(None)
 
 # Вывод данных (для GET ручек)
 class StudentOut(StudentBase):
     id_student: int
+    is_archive: bool
     group: GroupOut = Field(..., alias="group_rel")
 
     class Config:

@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session, joinedload
 
 from . import models, schemas, parser_students
 from modules.groups.models import Group
+from modules.results.models import ExamResult
 
 def create_student(db: Session, student: schemas.StudentCreate) -> models.Student:
     db_student = models.Student(
         name=student.name,
-        id_group=student.id_group
+        id_group=student.id_group,
+        is_archive=False
     )
     db.add(db_student)
     db.commit()
@@ -16,7 +18,7 @@ def create_student(db: Session, student: schemas.StudentCreate) -> models.Studen
     return db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.id_student == db_student.id_student).first()
 
 def get_all_students(db: Session) -> List[models.Student]:
-    return db.query(models.Student).options(joinedload(models.Student.group_rel)).all()
+    return db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.is_archive == False).all()
 
 def get_student_by_id(db: Session, student_id: int) -> models.Student:
     db_student = db.query(models.Student).options(joinedload(models.Student.group_rel)).filter(models.Student.id_student == student_id).first()
@@ -42,9 +44,23 @@ def delete_student(db: Session, student_id: int) -> dict:
     if not db_student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Студент не найден")
     
-    db.delete(db_student)
-    db.commit()
-    return {"status": "success", "message": f"Студент с ID {student_id} удален"}
+    # Проверяем, есть ли у студента записи об экзаменах в таблице результатов
+    has_results = db.query(ExamResult).filter(ExamResult.id_student == student_id).first() is not None
+    
+    if has_results:
+        db_student.is_archive = True
+        db.commit()
+        return {
+            "status": "archived", 
+            "message": f"Студент имеет результаты экзаменов. Он успешно перемещен в архив."
+        }
+    else:
+        db.delete(db_student)
+        db.commit()
+        return {
+            "status": "deleted", 
+            "message": f"Студент не связан с результатами сессий и был полностью удален."
+        }
 
 def patch_students_batch(db: Session, students_data: List[schemas.StudentImportSchema]) -> dict:
     result_students = []
@@ -69,8 +85,10 @@ def patch_students_batch(db: Session, students_data: List[schemas.StudentImportS
         if db_student:
             if item.name: db_student.name = item.name
             db_student.id_group = target_group.id_group
+            # Если мы обновляем пакетно архивного студента, можно вернуть его из архива при обновлении
+            db_student.is_archive = False 
         else:
-            db_student = models.Student(name=item.name, id_group=target_group.id_group)
+            db_student = models.Student(name=item.name, id_group=target_group.id_group, is_archive=False)
             db.add(db_student)
         
         db.flush()
@@ -116,8 +134,11 @@ async def import_from_file(db: Session, file: UploadFile) -> dict:
             ).first()
 
             if not db_student:
-                db_student = models.Student(name=item["name"], id_group=current_group.id_group)
+                db_student = models.Student(name=item["name"], id_group=current_group.id_group, is_archive=False)
                 db.add(db_student)
+                db.flush()
+            else:
+                db_student.is_archive = False
                 db.flush()
 
             db_student.group_rel = current_group
@@ -172,8 +193,11 @@ async def import_single_group_from_file(db: Session, file: UploadFile, target_gr
             ).first()
 
             if not db_student:
-                db_student = models.Student(name=item["name"], id_group=db_group.id_group)
+                db_student = models.Student(name=item["name"], id_group=db_group.id_group, is_archive=False)
                 db.add(db_student)
+                db.flush()
+            else:
+                db_student.is_archive = False
                 db.flush()
 
             db_student.group_rel = db_group

@@ -6,6 +6,7 @@ class QuestionPartial(BaseModel):
     standard_answer: Optional[str] = None
     question_content: Optional[str] = None
     complexity_score: Optional[float] = None
+    is_archive: Optional[bool] = None
 
 class QuestionPatch(QuestionPartial):
     pass
@@ -19,6 +20,7 @@ class QuestionCreate(QuestionBase):
 
 class QuestionOut(QuestionBase):
     id_question: int
+    is_archive: bool
 
     class Config:
         from_attributes = True

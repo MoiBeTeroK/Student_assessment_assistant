@@ -26,7 +26,7 @@ def create_test(test_data: schemas.TestCreate, db: Session = Depends(get_db)):
 def update_test(test_id: int, test_data: schemas.TestUpdate, db: Session = Depends(get_db)):
     return service.update_test(db, test_id, test_data)
     
-@router.delete("/{test_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить билет по ID")
+@router.delete("/{test_id}", status_code=status.HTTP_200_OK, summary="Удалить билет по ID")
 def delete_test(test_id: int, db: Session = Depends(get_db)):
     return service.delete_test(db, test_id)
     
